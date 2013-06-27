@@ -54,7 +54,6 @@ using namespace std;
 
 #include "br24radar_pi.h"
 
-
 enum {                                      // process ID's
     ID_TEXTCTRL1 = 10000,
     ID_OK,
@@ -64,7 +63,8 @@ enum {                                      // process ID's
     ID_TRANSLIDER,
     ID_CLUTTER,
     ID_GAIN,
-    ID_REJECTION
+    ID_REJECTION,
+	ID_ALARMZONES
 };
 
 //---------------------------------------------------------------------------------------
@@ -81,6 +81,7 @@ BEGIN_EVENT_TABLE(BR24ControlsDialog, wxDialog)
     EVT_RADIOBUTTON(ID_RANGEMODE, BR24ControlsDialog::OnRangeModeClick)
     EVT_RADIOBUTTON(ID_CLUTTER, BR24ControlsDialog::OnFilterProcessClick)
     EVT_RADIOBUTTON(ID_REJECTION, BR24ControlsDialog::OnRejectionModeClick)
+	EVT_RADIOBUTTON(ID_ALARMZONES, BR24ControlsDialog::OnAlarmZonesClick)
 
 END_EVENT_TABLE()
 
@@ -255,7 +256,7 @@ void BR24ControlsDialog::CreateControls()
 
     const wxString *names;
     int n;
-    if (pPlugIn->settings.distance_format < 2) /* NMi or Mi */
+    if (pPlugIn->settings.range_units < 2) /* NMi or Mi */
     {
       names = g_mile_range_names;
       n = sizeof(g_mile_range_names)/sizeof(g_mile_range_names[0]);
@@ -266,10 +267,9 @@ void BR24ControlsDialog::CreateControls()
       n = sizeof(g_metric_range_names)/sizeof(g_metric_range_names[0]);
     }
 
-    pRange = new wxChoice(this, wxID_ANY
-                              , wxDefaultPosition, wxDefaultSize
-                              , n, names
-                              , 0, wxDefaultValidator, _("choice"));
+    pRange = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize
+                              , n, names, 0, wxDefaultValidator, _("choice"));
+
     RangeBoxSizer->Add(pRange, 1, wxALIGN_LEFT | wxALL, 5);
     pRange->Connect(wxEVT_COMMAND_CHOICE_SELECTED,
                                wxCommandEventHandler(BR24ControlsDialog::OnRangeValue), NULL, this);
@@ -357,6 +357,24 @@ void BR24ControlsDialog::CreateControls()
     pGainSlider->Connect(wxEVT_SCROLL_CHANGED,
                          wxCommandEventHandler(BR24ControlsDialog::OnGainSlider), NULL, this);
 
+ // Alarm Zone Operations
+
+    wxString    AlarmZoneStrings[] = { _("Inactive"), _("Zone 1"), _("Zone 2"),};
+
+    pAlarmZones = new wxRadioBox(this, ID_ALARMZONES, _("Alarm Zones"), wxDefaultPosition,
+                                 wxDefaultSize, 3, AlarmZoneStrings, 1, wxRA_SPECIFY_COLS);
+
+    BoxSizerOperation->Add(pAlarmZones, 0, wxALL | wxEXPAND, 2);
+
+    pAlarmZones->Connect
+        (
+            wxEVT_COMMAND_RADIOBOX_SELECTED,
+            wxCommandEventHandler(BR24ControlsDialog::OnAlarmZonesClick),
+            NULL,
+            this
+        );
+    pAlarmZones->SetSelection(pPlugIn->settings.alarm_zone);
+
 // A horizontal box sizer to contain OK
     wxBoxSizer* AckBox = new wxBoxSizer(wxHORIZONTAL);
     boxSizer->Add(AckBox, 0, wxALIGN_CENTER_HORIZONTAL | wxALL, 5);
@@ -392,7 +410,7 @@ void BR24ControlsDialog::SetActualRange(long range)
     if (pPlugIn->settings.auto_range_mode) {
         const int * ranges;
         int         n;
-        if (pPlugIn->settings.distance_format < 2) { /* NMi or Mi */
+        if (pPlugIn->settings.range_units < 2) { /* NMi or Mi */
             n = (int) sizeof(g_mile_range_distances)/sizeof(g_mile_range_distances[0]);
             ranges = g_mile_range_distances;
         }
@@ -417,7 +435,7 @@ void BR24ControlsDialog::OnRangeValue(wxCommandEvent &event)
     if (selection != wxNOT_FOUND) {
         const int * ranges;
         int         n;
-        if (pPlugIn->settings.distance_format < 2) { /* NMi or Mi */
+        if (pPlugIn->settings.range_units < 2) { /* NMi or Mi */
             n = (int) sizeof(g_mile_range_distances)/sizeof(g_mile_range_distances[0]);
             ranges = g_mile_range_distances;
         }
@@ -490,6 +508,13 @@ void BR24ControlsDialog::OnGainSlider(wxCommandEvent &event)
             }
     }
 }
+void BR24ControlsDialog::OnAlarmZonesClick(wxCommandEvent &event)
+{
+    pPlugIn->settings.alarm_zone = (pAlarmZones->GetSelection());
+    if (pPlugIn->settings.alarm_zone > 0)
+        pPlugIn->OnAlarmZonesClick();
+}
+
 void BR24ControlsDialog::OnClose(wxCloseEvent& event)
 {
     pPlugIn->OnBR24ControlDialogClose();

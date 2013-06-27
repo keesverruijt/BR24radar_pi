@@ -64,6 +64,7 @@ static unsigned char BR24MARK[] = { 0x00, 0x44, 0x0d, 0x0e };
 enum {
     // process ID's
     ID_OK,
+    ID_RANGE_UNITS,
     ID_OVERLAYDISPLAYOPTION,
     ID_DISPLAYTYPE,
     ID_INTERVALSLIDER,
@@ -209,10 +210,12 @@ int br24radar_pi::Init(void)
     m_BR24Controls_dialog_sx = 200;
     m_BR24Controls_dialog_sy = 200;
 
-    m_BR24Manual_dialog_x = 0;
-    m_BR24Manual_dialog_y = 0;
-    m_BR24Manual_dialog_sx = 200;
-    m_BR24Manual_dialog_sy = 200;
+//      Set default parameters for Alarm Zone display
+    m_Alarm_dialog_x = 200;
+    m_Alarm_dialog_y = 0;
+    m_Alarm_dialog_sx = 100;
+    m_Alarm_dialog_sy = 100;
+
 
     ::wxDisplaySize(&m_display_width, &m_display_height);
 
@@ -249,11 +252,6 @@ int br24radar_pi::Init(void)
     wxMenuItem *pmi = new wxMenuItem(m_pmenu, -1, _("Radar Control..."));
     int miid = AddCanvasContextMenuItem(pmi, this);
     SetCanvasContextMenuItemViz(miid, true);
-
-    // Create the control dialog so that the actual range setting can be stored.
-    m_pControlDialog = new BR24ControlsDialog;
-    m_pControlDialog->Create(m_parent_window, this);
-    m_pControlDialog->Hide();
 
     //    Create the THREAD for Multicast radar data reception
     m_quit = false;
@@ -421,7 +419,31 @@ bool BR24DisplayOptionsDialog::Create(wxWindow *parent, br24radar_pi *ppi)
     wxStaticBoxSizer* DisplayOptionsCheckBoxSizer = new wxStaticBoxSizer(DisplayOptionsCheckBox, wxVERTICAL);
     DisplayOptionsBox->Add(DisplayOptionsCheckBoxSizer, 0, wxEXPAND | wxALL, border_size);
 
-/// Option settings
+    
+    //  Range Units options
+    wxStaticBox* BoxRangeUnits = new wxStaticBox(this, wxID_ANY, _("Range Units"));
+    wxStaticBoxSizer* BoxSizerOperation = new wxStaticBoxSizer(BoxRangeUnits, wxVERTICAL);
+    DisplayOptionsCheckBoxSizer->Add(BoxSizerOperation, 0, wxEXPAND | wxALL, border_size);
+
+    wxString RangeModeStrings[] = {
+        _("Nautical Miles"),
+        _("Statute Miles"),
+        _("Kilometers"),
+        _("Meters"),
+    };
+
+    pRangeUnits = new wxRadioBox(this, ID_RANGE_UNITS, _("Range Units"),
+                                    wxDefaultPosition, wxDefaultSize,
+                                    4, RangeModeStrings, 1, wxRA_SPECIFY_COLS);
+
+    BoxSizerOperation->Add(pRangeUnits, 0, wxALL | wxEXPAND, 2);
+
+    pRangeUnits->Connect(wxEVT_COMMAND_RADIOBOX_SELECTED,
+                            wxCommandEventHandler(BR24DisplayOptionsDialog::OnRangeUnitsClick), NULL, this);
+    
+    pRangeUnits->SetSelection(pPlugIn->settings.range_units);
+
+    // Option settings
     wxString Overlay_Display_Options[] = {
         _("Monocolor-Red"),
         _("Multi-color"),
@@ -523,6 +545,11 @@ bool BR24DisplayOptionsDialog::Create(wxWindow *parent, br24radar_pi *ppi)
     return true;
 }
 
+void BR24DisplayOptionsDialog::OnRangeUnitsClick(wxCommandEvent &event)
+{
+    pPlugIn->settings.range_units = pRangeUnits->GetSelection();
+}
+
 void BR24DisplayOptionsDialog::OnDisplayOptionClick(wxCommandEvent &event)
 {
     pPlugIn->settings.display_option = pOverlayDisplayOptions->GetSelection();
@@ -586,6 +613,32 @@ void br24radar_pi::OnBR24ControlDialogClose()
     }
 
     SaveConfig();
+}
+void br24radar_pi::OnAlarmZoneDialogClose()
+{
+    if (m_pAlarmZoneDialog) {
+        m_pAlarmZoneDialog->Hide();
+    }
+
+    SaveConfig();
+}
+
+void br24radar_pi::OnAlarmZonesClick()
+{
+     if (!m_pAlarmZoneDialog) {
+        m_pAlarmZoneDialog = new AlarmZoneDialog;
+        m_pAlarmZoneDialog->Create(m_parent_window, this);
+        m_pAlarmZoneDialog->Hide();
+    }
+
+    if (m_pAlarmZoneDialog->IsShown()) {
+        m_pAlarmZoneDialog->Hide();
+    } else {
+        m_pAlarmZoneDialog->Show();
+    }
+        m_pAlarmZoneDialog->SetSize(m_Alarm_dialog_x, m_Alarm_dialog_y,
+                                  m_Alarm_dialog_sx, m_Alarm_dialog_sy);
+
 }
 
 void br24radar_pi::SetDisplayMode(int mode)
@@ -1049,11 +1102,10 @@ bool br24radar_pi::LoadConfig(void)
 
     if (pConf) {
         pConf->SetPath(wxT("/Settings"));
-        pConf->Read( _T ( "DistanceFormat" ), &settings.distance_format, 0 ); //0 = "Nautical miles"), 1 = "Statute miles", 2 = "Kilometers", 3 = "Meters"
-
         pConf->SetPath(wxT("/Plugins/BR24Radar"));
         if (pConf->Read(wxT("DisplayOption"), &settings.display_option, 0))
         {
+            pConf->Read(wxT("RangeUnits" ), &settings.range_units, 0 ); //0 = "Nautical miles"), 1 = "Statute miles", 2 = "Kilometers", 3 = "Meters"
             pConf->Read(wxT("DisplayMode"),  &settings.display_mode, 0);
             pConf->Read(wxT("OverlayChart"),  &settings.overlay_chart, 0);
             pConf->Read(wxT("VerboseLog"),  &settings.verbose, 0);
@@ -1124,6 +1176,7 @@ bool br24radar_pi::SaveConfig(void)
     if (pConf) {
         pConf->SetPath(wxT("/Plugins/BR24Radar"));
         pConf->Write(wxT("DisplayOption"), settings.display_option);
+        pConf->Write(wxT("RangeUnits" ), settings.range_units);
         pConf->Write(wxT("DisplayMode"), settings.display_mode);
         pConf->Write(wxT("OverlayChart"), settings.overlay_chart);
         pConf->Write(wxT("VerboseLog"), settings.verbose);
