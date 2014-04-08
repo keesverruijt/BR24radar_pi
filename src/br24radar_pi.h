@@ -39,7 +39,7 @@
 #endif //precompiled headers
 
 #define     PLUGIN_VERSION_MAJOR    1
-#define     PLUGIN_VERSION_MINOR    20130521
+#define     PLUGIN_VERSION_MINOR    40408
 
 #define     MY_API_VERSION_MAJOR    1
 #define     MY_API_VERSION_MINOR    8
@@ -72,11 +72,7 @@ enum {
     BM_ID_BLANK_SLAVE
 
 };
-/*
-static double radar_distance(double lat1, double lon1, double lat2, double lon2, char unit);
-static double local_distance (double lat1, double lon1, double lat2, double lon2);
-static double local_bearing (double lat1, double lon1, double lat2, double lon2);
-*/
+
 enum {
     RADAR_OFF,
     RADAR_ON,
@@ -304,7 +300,7 @@ private:
 
 
     wxBitmap                 *m_ptemp_icon;
-//    wxLogWindow		         *m_plogwin; // Hakan
+//    wxLogWindow		         *m_plogwin;
     int                       m_sent_bm_id_normal;
     int                       m_sent_bm_id_rollover;
 
