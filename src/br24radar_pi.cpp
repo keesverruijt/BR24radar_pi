@@ -995,7 +995,7 @@ void br24radar_pi::RenderRadarStandalone(wxPoint radar_center, double v_scale_pp
 
     // scaling...
     int max_range = 1, angle;
-    for (angle = 0; angle < 360; angle++) {
+    for (angle = 0; angle < LINES_PER_ROTATION; angle++) {
         if (m_scan_range[angle][0] > max_range) {
             max_range = m_scan_range[angle][0];
         }
