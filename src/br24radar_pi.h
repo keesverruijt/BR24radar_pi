@@ -145,7 +145,7 @@ struct radar_control_settings {
     int      rain_clutter_gain;
     double   range_calibration;
     double   heading_correction;
-    int      range_units;        // 0 = "Nautical miles"), 1 = "Statute miles", 2 = "Kilometers", 3 = "Meters"
+    int      range_units;        // 0 = "Nautical miles"), 1 = "Kilometers"
     wxString radar_interface;        // IP address of interface to bind to (on UNIX)
     int      beam_width;
 };
@@ -163,7 +163,7 @@ class MulticastRXThread;
 class BR24ControlsDialog;
 class AlarmZoneDialog;
 class BR24DisplayOptionsDialog;
-
+class SignalConditioningDialog;
 //ofstream outfile("C:/ProgramData/opencpn/BR24DataDump.dat",ofstream::binary);
 
 //----------------------------------------------------------------------------------------------------------
@@ -217,22 +217,16 @@ public:
     void SetBR24ControlsDialogY(long y) {
         m_BR24Controls_dialog_y = y;
     }
-    void SetBR24ControlsDialogSizeX(long sx) {
-        m_BR24Controls_dialog_sx = sx;
-    }
-    void SetBR24ControlsDialogSizeY(long sy) {
-        m_BR24Controls_dialog_sy = sy;
-    }
     void Select_Alarm_Zones(int zone);
     void OnAlarmZoneDialogClose();
-
+   
+    void OnSignalConditioningDialogOpen();
     void SetFilterProcess(int br_process, int sel_gain);
     void SetGainMode(int mode);
     void SetRejectionMode(int mode);
+    void OnSignalConditioningDialogClose();
     bool LoadConfig(void);
     bool SaveConfig(void);
-
-    long GetRangeMeters();
     void SetRangeMeters(long range);
 
     radar_control_settings settings;
@@ -249,6 +243,7 @@ public:
     BR24DisplayOptionsDialog *m_pOptionsDialog;
     BR24ControlsDialog       *m_pControlDialog;
     AlarmZoneDialog          *m_pAlarmZoneDialog;
+    SignalConditioningDialog *m_pSignalConditioningDialog;
 
 private:
     void TransmitCmd(char* msg, int size);
@@ -411,18 +406,22 @@ public:
 
     void CreateControls();
     void SetActualRange(long range);
+    void SetGainText(bool manual);
+    void SetRainClutterText();
+    void SetSeaClutterText(bool manual);
+    wxTextCtrl        *pCommandRange;
+    wxTextCtrl        *pActualRange;
 
 private:
     void OnClose(wxCloseEvent& event);
     void OnIdOKClick(wxCommandEvent& event);
     void OnMove(wxMoveEvent& event);
-    void OnSize(wxSizeEvent& event);
     void OnTransSlider(wxCommandEvent &event);
     void OnRangeModeClick(wxCommandEvent &event);
     void OnRangeValue(wxCommandEvent &event);
-    void OnFilterProcessClick(wxCommandEvent &event);
     void OnRejectionModeClick(wxCommandEvent &event);
     void OnGainSlider(wxCommandEvent &event);
+    void OnSignalConditioningClick(wxCommandEvent &event);
 	void OnAlarmDialogClick(wxCommandEvent &event);
     void OnLogModeClick(wxCommandEvent &event);
 
@@ -433,13 +432,16 @@ private:
     wxSlider          *pTranSlider;
     wxRadioBox        *pRangeMode;
     wxChoice          *pRange;
-    wxTextCtrl        *pCommandRange;
-    wxTextCtrl        *pActualRange;
+
+    
     wxRadioBox        *pRejectionMode;
     wxRadioBox        *pFilterProcess;
-    wxSlider          *pGainSlider;
 	wxRadioBox        *pAlarmZones;
+    wxButton          *pSignalConditioning;
     wxCheckBox        *pCB_log;
+    wxTextCtrl        *pGain;
+    wxTextCtrl        *pRainClutter;
+    wxTextCtrl        *pSeaClutter;
 };
 
 /*
@@ -496,4 +498,52 @@ private:
     wxButton        *bClose;
 };
 
+
+/*
+ =======================================================================================================================
+    BR24Radar Signal Conditioning Dialog Specification ;
+ =======================================================================================================================
+ */
+class SignalConditioningDialog :    public wxDialog
+{
+    DECLARE_CLASS(SignalConditioningDialog)
+    DECLARE_EVENT_TABLE()
+
+public:
+    SignalConditioningDialog();
+
+    ~SignalConditioningDialog();
+    void    Init();
+
+    bool    Create
+            (
+                wxWindow        *parent,
+                br24radar_pi    *ppi,
+                wxWindowID      id = wxID_ANY,
+                const wxString  &m_caption = _(" Signal Conditioning Control"),
+                const wxPoint   &pos = wxDefaultPosition,
+                const wxSize    &size = wxDefaultSize,
+                long            style = wxCAPTION | wxRESIZE_BORDER | wxSYSTEM_MENU
+            );
+
+
+    void    CreateControls();
+    void    OnSignalConditioningDialogShow();
+
+private:
+    void            OnClose(wxCloseEvent &event);
+    void            OnIdOKClick(wxCommandEvent &event);
+    void            OnFilterProcessClick(wxCommandEvent &event);
+    void            OnRejectionModeClick(wxCommandEvent &event);
+    void            OnGainSlider(wxCommandEvent &event);
+
+    wxWindow        *pParent;
+    br24radar_pi    *pPlugIn;
+
+    /* Controls */
+    wxRadioBox      *pRejectionMode;
+    wxRadioBox      *pFilterProcess;
+    wxSlider        *pGainSlider;
+    wxButton        *bClose;
+};
 #endif
