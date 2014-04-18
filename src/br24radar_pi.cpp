@@ -1031,7 +1031,7 @@ void br24radar_pi::DrawRadarImage(int br_range_meters, wxPoint radar_center)
 
             int red = 0, green = 0, blue = 0, strength = m_scan_buf[angle][radius], alpha;
 
-            if (strength > 50) { // Only draw when there is color, saves lots of CPU
+            if (strength > 10) { // Only draw when there is color, saves lots of CPU
                 alpha = strength * (MAX_OVERLAY_TRANSPARENCY - settings.overlay_transparency) / MAX_OVERLAY_TRANSPARENCY;
                 switch (settings.display_option) {
                     case 0:
@@ -1093,14 +1093,16 @@ void br24radar_pi::RenderSpectrum(wxPoint radar_center, double v_scale_ppm, Plug
     int alpha;
     long scan_distribution[255];    // intensity distribution
 
-    memset(&scan_distribution[0], 0, 255);
+   for (int i = 0; i < 255; i++) {
+        scan_distribution[i] = 0;
+   }
 
     for (int angle = 0 ; angle < LINES_PER_ROTATION ; angle++) {
         if (m_scan_range[angle][0] != 0) {
             for (int radius = 1; radius < 510; ++radius) {
                 alpha = m_scan_buf[angle][radius];
                 if (alpha > 0 && alpha < 255) {
-                    scan_distribution[0] += 1;
+                    scan_distribution[0] +=1;
                     scan_distribution[alpha] += 1;
                 }
             }
@@ -1116,10 +1118,15 @@ void br24radar_pi::RenderSpectrum(wxPoint radar_center, double v_scale_ppm, Plug
     glScaled(.5, -.5, 1);
 
     int x, y;
-    for (x = 0; x < 254; ++x) {
-        y = (int)(scan_distribution[x] * 100 / scan_distribution[0]);
+    wxString msg;
+
+    if (scan_distribution[0] > 0){
+        for (x = 1; x < 254; ++x) {
+        float percent = (((float)scan_distribution[x]/ (float)scan_distribution[0]) * 10000) ;
+        y = (int) percent;
         glColor4ub(x, 0, 255 - x, 255); // red, green, blue, alpha
         draw_histogram_column(x, y);
+        }
     }
 
     glPopMatrix();
@@ -1128,9 +1135,9 @@ void br24radar_pi::RenderSpectrum(wxPoint radar_center, double v_scale_ppm, Plug
 
 void br24radar_pi::draw_histogram_column(int x, int y)  // x=0->255 => 0->1020, y=0->100 =>0->400
 {
-    int xa = 5 * x;
-    int xb = xa + 5;
-    y = 4 * y;
+    int xa = 8 * x;
+    int xb = xa + 8;
+    y= 5*y;
 
     glBegin(GL_TRIANGLES);        // draw blob in two triangles
     glVertex2i(xa, 0);
@@ -1170,9 +1177,9 @@ void br24radar_pi::draw_blob_gl(double angle, double radius, double blob_width)
     glVertex2d(xb, yb);
     glVertex2d(xc, yc);
 
-    glVertex2f(xa, ya);
-    glVertex2f(xc, yc);
-    glVertex2f(xd, yd);
+    glVertex2d(xa, ya);
+    glVertex2d(xc, yc);
+    glVertex2d(xd, yd);
     glEnd();
 }
 
