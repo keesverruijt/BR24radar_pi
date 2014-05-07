@@ -62,6 +62,7 @@ enum {                                      // process ID's
     ID_RANGE,
     ID_REPORTED_RANGE,
     ID_TRANSLIDER,
+    ID_ALARMTRANSLIDER,
     ID_SIGNALCONDITIONING,
     ID_ALARMZONES
 };
@@ -76,6 +77,7 @@ BEGIN_EVENT_TABLE(BR24ControlsDialog, wxDialog)
     EVT_CLOSE(BR24ControlsDialog::OnClose)
     EVT_BUTTON(ID_OK, BR24ControlsDialog::OnIdOKClick)
     EVT_MOVE(BR24ControlsDialog::OnMove)
+    EVT_SIZE(BR24ControlsDialog::OnSize)
     EVT_RADIOBUTTON(ID_RANGEMODE, BR24ControlsDialog::OnRangeModeClick)
     EVT_RADIOBUTTON(ID_SIGNALCONDITIONING, BR24ControlsDialog::OnSignalConditioningClick)
 	EVT_RADIOBUTTON(ID_ALARMZONES, BR24ControlsDialog::OnAlarmDialogClick)
@@ -298,7 +300,6 @@ void BR24ControlsDialog::CreateControls()
                          wxCommandEventHandler(BR24ControlsDialog::OnTransSlider), NULL, this);
 
     pTranSlider->SetValue(pPlugIn->settings.overlay_transparency);
-    pPlugIn->UpdateDisplayParameters();
 
 //  Image Conditioning Options
     
@@ -341,6 +342,22 @@ void BR24ControlsDialog::CreateControls()
         );
     pAlarmZones->SetSelection(pPlugIn->settings.alarm_zone);
 
+    //Alarm Transparency slider
+    wxStaticBox* alarm_transliderbox = new wxStaticBox(this, wxID_ANY, _("Alarm Zone Transp'y"));
+    wxStaticBoxSizer* alarm_transliderboxsizer = new wxStaticBoxSizer(alarm_transliderbox, wxVERTICAL);
+    BoxSizerOperation->Add(alarm_transliderboxsizer, 0, wxALL | wxEXPAND, 2);
+
+    pAlarm_TranSlider = new wxSlider( this, ID_ALARMTRANSLIDER, DEFAULT_OVERLAY_TRANSPARENCY, MIN_OVERLAY_TRANSPARENCY, MAX_OVERLAY_TRANSPARENCY - 1
+                              , wxDefaultPosition, wxDefaultSize
+                              , wxSL_HORIZONTAL, wxDefaultValidator, _("slider"));
+
+    alarm_transliderboxsizer->Add(pAlarm_TranSlider, 0, wxALL | wxEXPAND, 2);
+
+    pAlarm_TranSlider->Connect(wxEVT_SCROLL_CHANGED,
+                         wxCommandEventHandler(BR24ControlsDialog::OnAlarmTransSlider), NULL, this);
+
+    pAlarm_TranSlider->SetValue(pPlugIn->settings.alarm_overlay_transparency);
+
 // A horizontal box sizer to contain OK
     wxBoxSizer* AckBox = new wxBoxSizer(wxHORIZONTAL);
     boxSizer->Add(AckBox, 0, wxALIGN_CENTER_HORIZONTAL | wxALL, 5);
@@ -349,6 +366,8 @@ void BR24ControlsDialog::CreateControls()
     wxButton* bOK = new wxButton(this, ID_OK, _("&Close"),
                                  wxDefaultPosition, wxDefaultSize, 0);
     AckBox->Add(bOK, 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
+
+    pPlugIn->UpdateDisplayParameters();
 }
 
 void BR24ControlsDialog::OnRangeModeClick(wxCommandEvent &event)
@@ -435,7 +454,17 @@ void BR24ControlsDialog::OnSignalConditioningClick(wxCommandEvent &event)
 void BR24ControlsDialog::OnAlarmDialogClick(wxCommandEvent &event)
 {
     int zone = (pAlarmZones->GetSelection());
+    if (zone == 0)
+    {pAlarm_TranSlider->Disable();
+    } else
+    {pAlarm_TranSlider->Enable();
+    }
     pPlugIn->Select_Alarm_Zones(zone);
+}
+void BR24ControlsDialog::OnAlarmTransSlider(wxCommandEvent &event)
+{
+    pPlugIn->settings.alarm_overlay_transparency = pAlarm_TranSlider->GetValue();
+    pPlugIn->UpdateDisplayParameters();
 }
 
 void BR24ControlsDialog::OnClose(wxCloseEvent& event)
@@ -456,6 +485,16 @@ void BR24ControlsDialog::OnMove(wxMoveEvent& event)
     wxPoint p =  GetPosition();
     pPlugIn->SetBR24ControlsDialogX(p.x);
     pPlugIn->SetBR24ControlsDialogY(p.y);
+
+    event.Skip();
+}
+	 
+	 void BR24ControlsDialog::OnSize(wxSizeEvent& event)
+{
+    //    Record the dialog size
+    wxSize p = event.GetSize();
+    pPlugIn->SetBR24ControlsDialogSizeX(p.x);
+    pPlugIn->SetBR24ControlsDialogSizeY(p.y);
 
     event.Skip();
 }

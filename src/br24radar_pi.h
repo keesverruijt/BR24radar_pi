@@ -38,8 +38,8 @@
 #include "wx/wx.h"
 #endif //precompiled headers
 
-#define     PLUGIN_VERSION_MAJOR    1
-#define     PLUGIN_VERSION_MINOR    40408
+#define     PLUGIN_VERSION_MAJOR    0
+#define     PLUGIN_VERSION_MINOR    40507
 
 #define     MY_API_VERSION_MAJOR    1
 #define     MY_API_VERSION_MINOR    8
@@ -58,8 +58,21 @@
 
 #include "ocpn_plugin.h"
 
-//#include "navutil.h"        //This is the devil
-//#include "OCPN_Sound.h"     // If we try this instead?
+#ifndef SOCKET
+# define SOCKET int
+#endif
+#ifndef INVALID_SOCKET
+# define INVALID_SOCKET ((SOCKET)~0)
+#endif
+
+#ifdef __WXMSW__
+# define SOCKETERRSTR (strerror(WSAGetLastError()))
+#else
+# include <errno.h>
+# define SOCKETERRSTR (strerror(errno))
+# define closesocket(fd) close(fd)
+#endif
+
 
 enum {
     BM_ID_RED,
@@ -131,7 +144,6 @@ struct radar_control_settings {
     int     radar_type;
     int      overlay_transparency;    // now 0-100, no longer a double
     bool     master_mode;
-    bool     overlay_chart;           // true means always show if received, even if not master
     bool     verbose;
     bool     auto_range_mode;
     int      range_index;
@@ -139,6 +151,7 @@ struct radar_control_settings {
     int      display_mode;
 	int      alarm_zone;            // active zone (0 = none,1,2)
     int      alarm_zone_threshold;
+    int      alarm_overlay_transparency;
     int      gain;
     int      rejection;
     int      filter_process;
@@ -218,6 +231,12 @@ public:
     void SetBR24ControlsDialogY(long y) {
         m_BR24Controls_dialog_y = y;
     }
+    void SetBR24ControlsDialogSizeX(long sx) {
+        m_BR24Controls_dialog_sx = sx;
+    }
+    void SetBR24ControlsDialogSizeY(long sy) {
+        m_BR24Controls_dialog_sy = sy;
+    }
     void Select_Alarm_Zones(int zone);
     void OnAlarmZoneDialogClose();
    
@@ -266,7 +285,7 @@ private:
     void DrawFilledArc(double r1, double r2, double a1, double a2);
     void draw_blob_dc(wxDC &dc, double angle, double radius, double blob_r, double arc_length,
                       double scale, int xoff, int yoff);
-    void draw_blob_gl(double angle, double radius, double arc_width, double blob_heigth);
+    void draw_blob_gl(double angle, double radius, double blob_width, double blob_heigth);
     void draw_histogram_column(int x, int y);
 
     void CacheSetToolbarToolBitmaps(int bm_id_normal, int bm_id_rollover);
@@ -285,7 +304,7 @@ private:
 
     MulticastRXThread        *m_receiveThread;
 
-    wxDatagramSocket         *m_out_sock101;
+    SOCKET                    m_radar_socket;
     wxDateTime                m_dt_last_render;
 
     long                      m_BR24Controls_dialog_sx, m_BR24Controls_dialog_sy ;
@@ -313,13 +332,10 @@ class MulticastRXThread: public wxThread
 
 public:
 
-    MulticastRXThread(br24radar_pi *ppi, volatile bool * quit, const wxString &IP_addr, const wxString &service_port)
+    MulticastRXThread(br24radar_pi *ppi, volatile bool * quit)
     : wxThread(wxTHREAD_JOINABLE)
     , pPlugIn(ppi)
-    , m_ip(IP_addr)
-    , m_service_port(service_port)
     , m_quit(quit)
-    , m_sock(0)
     {
 //      wxLogMessage(_T("BR24 radar thread starting for multicast address %ls port %ls"), m_ip.c_str(), m_service_port.c_str());
       Create(1024 * 1024);
@@ -335,11 +351,8 @@ private:
 
     br24radar_pi      *pPlugIn;
     wxString           m_ip;
-    wxString           m_service_port;
     volatile bool    * m_quit;
-    wxDatagramSocket * m_sock;
     wxIPV4address      m_myaddr;
-
 };
 
 //----------------------------------------------------------------------------------------------------------
@@ -417,6 +430,7 @@ private:
     void OnClose(wxCloseEvent& event);
     void OnIdOKClick(wxCommandEvent& event);
     void OnMove(wxMoveEvent& event);
+    void OnSize(wxSizeEvent& event);
     void OnTransSlider(wxCommandEvent &event);
     void OnRangeModeClick(wxCommandEvent &event);
     void OnRangeValue(wxCommandEvent &event);
@@ -424,6 +438,7 @@ private:
     void OnGainSlider(wxCommandEvent &event);
     void OnSignalConditioningClick(wxCommandEvent &event);
 	void OnAlarmDialogClick(wxCommandEvent &event);
+    void OnAlarmTransSlider(wxCommandEvent &event);
     void OnLogModeClick(wxCommandEvent &event);
 
     wxWindow          *pParent;
@@ -438,6 +453,7 @@ private:
     wxRadioBox        *pRejectionMode;
     wxRadioBox        *pFilterProcess;
 	wxRadioBox        *pAlarmZones;
+    wxSlider          *pAlarm_TranSlider;
     wxButton          *pSignalConditioning;
     wxCheckBox        *pCB_log;
     wxTextCtrl        *pGain;

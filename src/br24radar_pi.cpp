@@ -273,6 +273,7 @@ int br24radar_pi::Init(void)
     settings.master_mode = false;                 // we're not the master controller at startup
     settings.auto_range_mode = true;                    // starts with auto range change
     settings.overlay_transparency = DEFAULT_OVERLAY_TRANSPARENCY;
+    settings.alarm_overlay_transparency = DEFAULT_OVERLAY_TRANSPARENCY;
 
 //      Set default parameters for controls displays
     m_BR24Controls_dialog_x = 0;
@@ -302,14 +303,34 @@ int br24radar_pi::Init(void)
         CacheSetToolbarToolBitmaps(BM_ID_RED, BM_ID_BLANK);
     }
 
-    wxIPV4address dummy;                // Do this to initialize the wxSocketBase tables
-
     //    Create the control socket for the Radar data receiver
 
-    wxIPV4address addr101;
-    addr101.AnyAddress();
-    addr101.Service(wxT("6678"));
-    m_out_sock101 = new wxDatagramSocket(addr101, wxSOCKET_REUSEADDR | wxSOCKET_NOWAIT);
+    struct sockaddr_in adr;
+    memset(&adr, 0, sizeof(adr));
+    adr.sin_family = AF_INET;
+    adr.sin_addr.s_addr=htonl(INADDR_ANY);
+    adr.sin_port=htons(6680);
+    int one = 1;
+    int r = 0;
+    m_radar_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (m_radar_socket == INVALID_SOCKET) {
+        r = -1;
+    }
+    else {
+        r = setsockopt(m_radar_socket, SOL_SOCKET, SO_REUSEADDR, (const char *) &one, sizeof(one));
+    }
+
+    if (!r)
+    {
+        r = bind(m_radar_socket, (struct sockaddr *) &adr, sizeof(adr));
+    }
+
+    if (r)
+    {
+        wxLogError(wxT("BR24radar_pi: Unable to create UDP sending socket"));
+        // Might as well give up now
+        return 0;
+    }
 
     // Context Menu Items (Right click on chart screen)
 
@@ -332,7 +353,7 @@ int br24radar_pi::Init(void)
 */
     //    Create the THREAD for Multicast radar data reception
     m_quit = false;
-    m_receiveThread = new MulticastRXThread(this, &m_quit, wxT("236.6.7.8"), wxT("6678"));
+    m_receiveThread = new MulticastRXThread(this, &m_quit);
     m_receiveThread->Run();
 
     return (WANTS_DYNAMIC_OPENGL_OVERLAY_CALLBACK |
@@ -357,11 +378,11 @@ bool br24radar_pi::DeInit(void)
         m_receiveThread->Wait();
         delete m_receiveThread;
     }
-/*
+
     if (m_radar_socket != INVALID_SOCKET) {
         closesocket(m_radar_socket);
     }
-*/
+
     // I think we need to destroy any windows here
 
     return true;
@@ -766,6 +787,12 @@ void br24radar_pi::OnToolbarToolCallback(int id)
 
     UpdateState();
 }
+
+// DoTick
+// ------
+// Called on every RenderGLOverlay call, i.e. once a second.
+//
+// This checks if we need to ping the radar to keep it alive (or make it alive)
 //*********************************************************************************
 // Keeps Radar scanner on line if master and radar on -  run by RenderGLOverlay
 
@@ -875,7 +902,6 @@ bool br24radar_pi::RenderGLOverlay(wxGLContext *pcontext, PlugIn_ViewPort *vp)
              m_pControlDialog->pActualRange->SetValue(rangeText);
              }
 
-        double c_dist, lat, lon;
         double max_distance = 0;
         wxPoint center_screen(vp->pix_width / 2, vp->pix_height / 2);
         wxPoint boat_center;
@@ -1032,7 +1058,7 @@ void br24radar_pi::DrawRadarImage(int br_range_meters, wxPoint radar_center)
             GLubyte red = 0, green = 0, blue = 0, strength = m_scan_buf[angle][radius];
 
             if (strength > 10) { // Only draw when there is color, saves lots of CPU
-                alpha = strength * (MAX_OVERLAY_TRANSPARENCY - settings.overlay_transparency) / MAX_OVERLAY_TRANSPARENCY;
+               
                 switch (settings.display_option) {
                     case 0:
                         red = 255;
@@ -1198,6 +1224,7 @@ void br24radar_pi::draw_blob_gl(double angle, double radius, double arc_width, d
 //****************************************************************************
 void br24radar_pi::RenderAlarmZone(wxPoint radar_center, double v_scale_ppm)
 {
+    GLubyte alpha = 255 * (MAX_OVERLAY_TRANSPARENCY - settings.alarm_overlay_transparency) / MAX_OVERLAY_TRANSPARENCY;
     glPushAttrib(GL_COLOR_BUFFER_BIT | GL_LINE_BIT | GL_HINT_BIT);      //Save state
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -1218,7 +1245,7 @@ void br24radar_pi::RenderAlarmZone(wxPoint radar_center, double v_scale_ppm)
                 AZ_angle_1 = Zone1.start_bearing;
                 AZ_angle_2 = Zone1.end_bearing;
             }
-            int red = 0, green = 200, blue = 0, alpha = 50;
+            int red = 0, green = 200, blue = 0;
             glColor4ub((GLubyte)red, (GLubyte)green, (GLubyte)blue, (GLubyte)alpha);    // red, blue, green
             DrawFilledArc(AZ_outer_radius, AZ_inner_radius, AZ_angle_1, AZ_angle_2);
     }
@@ -1234,7 +1261,7 @@ void br24radar_pi::RenderAlarmZone(wxPoint radar_center, double v_scale_ppm)
                 AZ_angle_2 = Zone2.end_bearing;
             }
 
-            int red = 0, green = 0, blue = 200, alpha = 50;
+            int red = 0, green = 0, blue = 200;
             glColor4ub((GLubyte)red, (GLubyte)green, (GLubyte)blue, (GLubyte)alpha);    // red, blue, green
             DrawFilledArc(AZ_outer_radius, AZ_inner_radius, AZ_angle_1, AZ_angle_2);
     }
@@ -1309,7 +1336,7 @@ bool br24radar_pi::LoadConfig(void)
             pConf->Read(wxT("InterferenceRejection"), &settings.rejection, 0);
             pConf->Read(wxT("AlarmZonesActive"), &settings.alarm_zone, 0);
             pConf->Read(wxT("AlarmZonesThreshold"), &settings.alarm_zone_threshold, 5L);
-
+            pConf->Read(wxT("AlarmZonesTransparency"), &settings.alarm_overlay_transparency, 50);
             pConf->Read(wxT("ControlsDialogSizeX"), &m_BR24Controls_dialog_sx, 300L);
             pConf->Read(wxT("ControlsDialogSizeY"), &m_BR24Controls_dialog_sy, 540L);
             pConf->Read(wxT("ControlsDialogPosX"), &m_BR24Controls_dialog_x, 20L);
@@ -1326,6 +1353,7 @@ bool br24radar_pi::LoadConfig(void)
             pConf->Read(wxT("Zone2OutRng"), &Zone2.outer_range, 0);
             pConf->Read(wxT("Zone2InRng"), &Zone2.inner_range, 0);
             pConf->Read(wxT("Zone2ArcCirc"), &Zone2.type, 0);
+
 
             pConf->Read(wxT("RadarAlertAudioFile"), &RadarAlertAudioFile );
             SaveConfig();
@@ -1394,7 +1422,7 @@ bool br24radar_pi::SaveConfig(void)
         pConf->Write(wxT("InterferenceRejection"), settings.rejection);
         pConf->Write(wxT("AlarmZonesActive"), settings.alarm_zone);
         pConf->Write(wxT("AlarmZonesThreshold"), settings.alarm_zone_threshold);
-
+        pConf->Write(wxT("AlarmZonesTransparency"), settings.alarm_overlay_transparency);
         pConf->Write(wxT("ControlsDialogSizeX"),  m_BR24Controls_dialog_sx);
         pConf->Write(wxT("ControlsDialogSizeY"),  m_BR24Controls_dialog_sy);
         pConf->Write(wxT("ControlsDialogPosX"),   m_BR24Controls_dialog_x);
@@ -1477,13 +1505,14 @@ cur_lon = lon;
 //************************************************************************
 void br24radar_pi::TransmitCmd(char* msg, int size)
 {
-    wxIPV4address addr101;
-    addr101.Service(6680);        //(wxT("6680"));      addr101.Service(wxT("6680"));
-    addr101.Hostname(wxT("236.6.7.10"));
-    m_out_sock101->SendTo(addr101, msg, size);
+    struct sockaddr_in adr;
+    memset(&adr, 0, sizeof(adr));
+    adr.sin_family = AF_INET;
+    adr.sin_addr.s_addr=htonl((236 << 24) | (6 << 16) | (7 << 8) | 10); // 236.6.7.10
+    adr.sin_port=htons(6680);
 
-    if (m_out_sock101->Error()) {
-//        wxLogMessage(wxT("BR24radar_pi: unable to transmit command, error %d\n"), m_out_sock101->LastError());
+    if (m_radar_socket == INVALID_SOCKET || sendto(m_radar_socket, msg, size, 0, (struct sockaddr *) &adr, sizeof(adr)) < size) {
+        wxLogMessage(wxT("BR24radar_pi: unable to transmit command to radar: %s\n"), SOCKETERRSTR);
         return;
     };
 };
@@ -1728,94 +1757,226 @@ void MulticastRXThread::OnExit()
 //  wxLogMessage(wxT("BR24radar_pi: radar thread is stopping."));
 }
 
+static int my_inet_aton(const char *cp, struct in_addr *addr)
+{
+    register u_long val;
+    register int base, n;
+    register char c;
+    u_int parts[4];
+    register u_int *pp = parts;
+
+    c = *cp;
+    for (;;) {
+        /*
+         * Collect number up to ``.''.
+         * Values are specified as for C:
+         * 0x=hex, 0=octal, isdigit=decimal.
+         */
+        if (!isdigit(c))
+        {
+            return (0);
+        }
+        val = 0;
+        base = 10;
+        if (c == '0') {
+            c = *++cp;
+            if (c == 'x' || c == 'X') {
+                base = 16, c = *++cp;
+            } else {
+                base = 8;
+            }
+        }
+        for (;;) {
+            if (isascii(c) && isdigit(c)) {
+                val = (val * base) + (c - '0');
+                c = *++cp;
+            }
+            else if (base == 16 && isascii(c) && isxdigit(c)) {
+                val = (val << 4) |
+                    (c + 10 - (islower(c) ? 'a' : 'A'));
+                c = *++cp;
+            } else {
+                break;
+            }
+        }
+        if (c == '.') {
+            /*
+             * Internet format:
+             *    a.b.c.d
+             *    a.b.c    (with c treated as 16 bits)
+             *    a.b    (with b treated as 24 bits)
+             */
+            if (pp >= parts + 3)
+            {
+                return (0);
+            }
+            *pp++ = val;
+            c = *++cp;
+        } else {
+            break;
+        }
+    }
+    /*
+     * Check for trailing characters.
+     */
+    if (c != '\0' && (!isascii(c) || !isspace(c)))
+    {
+        return 0;
+    }
+    /*
+     * Concoct the address according to
+     * the number of parts specified.
+     */
+    n = pp - parts + 1;
+    switch (n) {
+
+    case 0:
+        return 0;        /* initial nondigit */
+
+    case 1:                /* a -- 32 bits */
+        break;
+
+    case 2:                /* a.b -- 8.24 bits */
+        if (val > 0xffffff) {
+            return 0;
+        }
+        val |= parts[0] << 24;
+        break;
+
+    case 3:                /* a.b.c -- 8.8.16 bits */
+        if (val > 0xffff) {
+            return 0;
+        }
+        val |= (parts[0] << 24) | (parts[1] << 16);
+        break;
+
+    case 4:                /* a.b.c.d -- 8.8.8.8 bits */
+        if (val > 0xff) {
+            return 0;
+        }
+        val |= (parts[0] << 24) | (parts[1] << 16) | (parts[2] << 8);
+        break;
+    }
+    if (addr) {
+        addr->s_addr = htonl(val);
+    }
+    return 1;
+}
+
+static bool socketReady( SOCKET sockfd, int timeout )
+{
+    fd_set fdin;
+    struct timeval tv = { (long) timeout, 0 };
+
+    FD_ZERO(&fdin);
+    FD_SET(sockfd, &fdin);
+
+    int r = select(sockfd + 1, &fdin, 0, &fdin, &tv);
+
+    return r > 0;
+}
+
 void *MulticastRXThread::Entry(void)
 {
-
-    //    Create a datagram socket for receiving data
-    m_myaddr.AnyAddress();
-    m_myaddr.Service(m_service_port);
     wxString msg;
+    SOCKET rx_socket;
+    struct sockaddr_in adr;
+    int one = 1;
+    int r = 0;
 
-    m_sock = new wxDatagramSocket(m_myaddr, wxSOCKET_REUSEADDR);
+    memset(&adr, 0, sizeof(adr));
+    adr.sin_family = AF_INET;
+    adr.sin_addr.s_addr=htonl(INADDR_ANY);
+    adr.sin_port=htons(6678);
+    rx_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (rx_socket == INVALID_SOCKET) {
+        r = -1;
+    }
+    else {
+        r = setsockopt(rx_socket, SOL_SOCKET, SO_REUSEADDR, (const char *) &one, sizeof(one));
+    }
 
-    if (!m_sock) {
- //       wxLogMessage(wxT("BR24radar_pi: Unable to listen on port %ls"), m_service_port.c_str());
+    if (!r)
+    {
+        r = bind(rx_socket, (struct sockaddr *) &adr, sizeof(adr));
+    }
+
+    if (r)
+    {
+        wxLogError(wxT("BR24radar_pi: Unable to create UDP sending socket"));
+        // Might as well give up now
+        if (rx_socket != INVALID_SOCKET) {
+            closesocket(rx_socket);
+        }
         return 0;
     }
 
-    m_sock->SetFlags(wxSOCKET_BLOCK); // We use blocking but use Wait() to avoid timeouts.
+    // Subscribe rx_socket to a multicast group
+    struct in_addr recvAddr;
 
-    //    Subscribe to a multicast group
-    unsigned int mcAddr;
-    unsigned int recvAddr;
-
-#ifndef __WXMSW__
-    GAddress gaddress;
-    _GAddress_Init_INET(&gaddress);
-    GAddress_INET_SetHostName(&gaddress, m_ip.mb_str());
-
-    struct in_addr *addr;
-    addr = &(((struct sockaddr_in *)gaddress.m_addr)->sin_addr);
-    mcAddr = addr->s_addr;
-
-    _GAddress_Init_INET(&gaddress);
-    GAddress_INET_SetHostName(&gaddress, pPlugIn->settings.radar_interface.mb_str());
-    addr = &(((struct sockaddr_in *)gaddress.m_addr)->sin_addr);
-    recvAddr = addr->s_addr;
-
-#else
-    mcAddr = inet_addr(m_ip.mb_str());
-    recvAddr = inet_addr(pPlugIn->settings.radar_interface.mb_str());
-#endif
+    if (!my_inet_aton(pPlugIn->settings.radar_interface.mb_str().data(), &recvAddr)) {
+        wxLogError(wxT("Unable to determine address of %s"), pPlugIn->settings.radar_interface.mb_str().data());
+        closesocket(rx_socket);
+        return 0;
+    }
 
     struct ip_mreq mreq;
-    mreq.imr_multiaddr.s_addr = mcAddr;
-    mreq.imr_interface.s_addr = recvAddr;
+    // listen to 236.6.7.8 on interface identified by recvAddr.
+    mreq.imr_multiaddr.s_addr = htonl((236 << 24) | (6 << 16) | (7 << 8) | 8); // 236.6.7.8
+    mreq.imr_interface = recvAddr;
 
-    bool bam = m_sock->SetOption(IPPROTO_IP, IP_ADD_MEMBERSHIP, (const void *)&mreq, sizeof(mreq));
-    if (!bam) {
-        wxLogError(wxT("Unable to listen to multicast group: %d"), m_sock->LastError());
-        // wxMessageBox(wxT("Unable to listen to radar data"), wxT("BR24radar"), wxOK | wxICON_EXCLAMATION);
+    r = setsockopt(rx_socket, IPPROTO_IP, IP_ADD_MEMBERSHIP, (const char *) &mreq, sizeof(mreq));
+    if (r) {
+        wxLogError(wxT("Unable to listen to multicast group: %s"), SOCKETERRSTR);
+        closesocket(rx_socket);
         return 0;
     }
 
-    wxIPV4address rx_addr;
-    rx_addr.Hostname(wxT("0.0.0.0"));   // UDP sender broadcast IP is dynamically assigned else standard IGMPV4
-    // just so long as it looks like an IP
+    sockaddr_storage rx_addr;
+    socklen_t        rx_len;
 
-/************************************************************************************************************/
-    //    The big while....
+    //    Loop until we quit
     int n_rx_once = 0;
     while (!*m_quit) {
-        if (m_sock->Wait(1, 0)) {
+        if (socketReady(rx_socket, 1)) {
             packet_buf frame;
-            m_sock->RecvFrom(rx_addr, frame.buf, sizeof(frame.buf));
-            int len = m_sock->LastCount();
-            if (len) {
+            rx_len = sizeof(rx_addr);
+            r = recvfrom(rx_socket, (char *) frame.buf, sizeof(frame.buf), 0, (struct sockaddr *) &rx_addr, &rx_len);
+            if (r) {
                 if (0 == n_rx_once) {
- //                   wxLogMessage(wxT("BR24radar_pi: First Packet Received."));
+                    if (pPlugIn->settings.verbose) {
+                        wxLogMessage(wxT("BR24radar_pi: First Packet Received."));
+                    }
                     n_rx_once++;
                 }
                 br_scan_packets_per_tick++;
-                process_buffer(&frame.packet, len);
+                process_buffer(&frame.packet, r);
             }
         }
     }
+
+    closesocket(rx_socket);
     return 0;
 }
 
-void MulticastRXThread::process_buffer(radar_frame_pkt * packet, int len)
+// process_buffer
+// --------------
+// Process one radar frame packet, which can contain up to 32 'spokes' or lines extending outwards
+// from the radar up to the range indicated in the packet.
+//
 // We only get Data packets of fixed length from PORT (6678), see structure in .h file
 // Sequence Header - 8 bytes
 // 32 line header/data sets per packet
 //      Line Header - 24 bytes
 //      Line Data - 512 bytes
+//
+void MulticastRXThread::process_buffer(radar_frame_pkt * packet, int len)
 {
     for (int scanline = 0; scanline < 32 ; scanline++) {
         radar_line * line = &packet->line[scanline];
         if ((char *) &packet->line[scanline + 1] > (char *) packet + len)
         {
-//          wxLogMessage(wxT("BR24radar_pi: Truncated packet at line %d len %d"), scanline, len);
+          // ignore a truncated spoke
           break;
         }
 
