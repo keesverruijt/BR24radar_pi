@@ -138,6 +138,7 @@ struct radar_control_settings {
     int      display_option;
     int      display_mode;
 	int      alarm_zone;            // active zone (0 = none,1,2)
+    int      alarm_zone_threshold;
     int      gain;
     int      rejection;
     int      filter_process;
@@ -265,7 +266,7 @@ private:
     void DrawFilledArc(double r1, double r2, double a1, double a2);
     void draw_blob_dc(wxDC &dc, double angle, double radius, double blob_r, double arc_length,
                       double scale, int xoff, int yoff);
-    void draw_blob_gl(double angle, double radius, double blob_width);
+    void draw_blob_gl(double angle, double radius, double arc_width, double blob_heigth);
     void draw_histogram_column(int x, int y);
 
     void CacheSetToolbarToolBitmaps(int bm_id_normal, int bm_id_rollover);
