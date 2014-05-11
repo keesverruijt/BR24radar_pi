@@ -38,8 +38,8 @@
 #include "wx/wx.h"
 #endif //precompiled headers
 
-#define     PLUGIN_VERSION_MAJOR    1
-#define     PLUGIN_VERSION_MINOR    40412
+#define     PLUGIN_VERSION_MAJOR    0
+#define     PLUGIN_VERSION_MINOR    40429
 
 #define     MY_API_VERSION_MAJOR    1
 #define     MY_API_VERSION_MINOR    8
@@ -150,6 +150,7 @@ struct radar_control_settings {
     int      display_option;
     int      display_mode;
     int      alarm_zone;            // active zone (0 = none,1,2)
+    int      alarm_zone_threshold;  // How many blobs must be sent by radar before we fire alarm
     int      gain;
     int      rejection;
     int      filter_process;
@@ -174,6 +175,7 @@ struct alarm_zone_settings {
 class MulticastRXThread;
 class BR24ControlsDialog;
 class AlarmZoneDialog;
+class AlarmZoneBogey;
 class BR24DisplayOptionsDialog;
 
 //ofstream outfile("C:/ProgramData/opencpn/BR24DataDump.dat",ofstream::binary);
@@ -237,6 +239,8 @@ public:
     }
     void Select_Alarm_Zones(int zone);
     void OnAlarmZoneDialogClose();
+    void OnAlarmZoneBogeyClose();
+    void OnAlarmZoneBogeyConfirm();
 
     void SetFilterProcess(int br_process, int sel_gain);
     void SetGainMode(int mode);
@@ -261,6 +265,7 @@ public:
     BR24DisplayOptionsDialog *m_pOptionsDialog;
     BR24ControlsDialog       *m_pControlDialog;
     AlarmZoneDialog          *m_pAlarmZoneDialog;
+    AlarmZoneBogey           *m_pAlarmZoneBogey;
 
 private:
     void TransmitCmd(char* msg, int size);
@@ -277,12 +282,12 @@ private:
     void OpenGL3_Render_Overlay();
     void RenderRadarBuffer(wxDC *pdc, int width, int height);
     void DrawRadarImage(int max_range, wxPoint radar_center);
-    void RenderAlarmZone(wxPoint radar_center, double v_scale_ppm);
-    void PlayAlarmSound(bool on_off); 
+    void RenderAlarmZone(wxPoint radar_center, double v_scale_ppm, PlugIn_ViewPort *vp);
+    void HandleBogeyCount(int bogey_count);
     void DrawFilledArc(double r1, double r2, double a1, double a2);
     void draw_blob_dc(wxDC &dc, double angle, double radius, double blob_r, double arc_length,
                       double scale, int xoff, int yoff);
-    void draw_blob_gl(double angle, double radius, double blob_width);
+    void draw_blob_gl(double angle, double radius, double blob_width, double blob_heigth);
     void draw_histogram_column(int x, int y);
 
     void CacheSetToolbarToolBitmaps(int bm_id_normal, int bm_id_rollover);
@@ -322,6 +327,7 @@ private:
     int                       m_hdt_prev_source;
 
     double                    llat, llon, ulat, ulon, dist_y, pix_y, v_scale_ppm;
+
 };
 
 class MulticastRXThread: public wxThread
@@ -499,6 +505,49 @@ private:
     wxTextCtrl      *pOuter_Range;
     wxTextCtrl      *pStart_Bearing_Value;
     wxTextCtrl      *pEnd_Bearing_Value;
+};
+
+/*
+ =======================================================================================================================
+    BR24Radar Alarm Zone Bogey Dialog Specification ;
+ =======================================================================================================================
+ */
+class AlarmZoneBogey :    public wxDialog
+{
+    DECLARE_CLASS(AlarmZoneBogey)
+    DECLARE_EVENT_TABLE()
+
+public:
+    AlarmZoneBogey();
+
+    ~AlarmZoneBogey();
+    void    Init();
+
+    bool    Create
+            (
+                wxWindow        *parent,
+                br24radar_pi    *ppi,
+                wxWindowID      id = wxID_ANY,
+                const wxString  &m_caption = _("Alarm Zone Active"),
+                const wxPoint   &pos = wxDefaultPosition,
+                const wxSize    &size = wxDefaultSize,
+                long            style = wxCAPTION | wxRESIZE_BORDER | wxSYSTEM_MENU
+            );
+
+
+    void    CreateControls();
+    void    SetBogeyCount(int bogey_count, int next_alarm);
+
+private:
+    void            OnClose(wxCloseEvent &event);
+    void            OnIdConfirmClick(wxCommandEvent &event);
+    void            OnIdCloseClick(wxCommandEvent &event);
+
+    wxWindow        *pParent;
+    br24radar_pi    *pPlugIn;
+
+    /* Controls */
+    wxStaticText    *pBogeyCountText;
 };
 
 #endif

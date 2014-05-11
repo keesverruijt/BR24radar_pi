@@ -125,9 +125,10 @@ double AZ_outer_radius, AZ_inner_radius, AZ_angle_1, AZ_angle_2;
 double ppNM;
 
 
-wxSound RadarAlarm;     //This is the Devil
-wxString RadarAlertAudioFile;
-bool alarm_sound_on = false;
+wxSound     RadarAlarm;     //This is the Devil
+wxString    RadarAlertAudioFile;
+bool        alarm_bogey_confirmed = false;
+wxDateTime  alarm_sound_last;
 
 // the class factories, used to create and destroy instances of the PlugIn
 
@@ -250,6 +251,7 @@ int br24radar_pi::Init(void)
 
     watchdog = wxDateTime::Now();
     br_dt_stayalive = wxDateTime::Now();
+    alarm_sound_last = wxDateTime::Now();
 
     m_dt_last_render = wxDateTime::Now();
     m_ptemp_icon = NULL;
@@ -381,6 +383,8 @@ bool br24radar_pi::DeInit(void)
     if (m_radar_socket != INVALID_SOCKET) {
         closesocket(m_radar_socket);
     }
+
+    // I think we need to destroy any windows here
 
     return true;
 }
@@ -702,9 +706,22 @@ void br24radar_pi::OnAlarmZoneDialogClose()
         SetCanvasContextMenuItemViz(alarm_zone_id, false);
         SetCanvasContextMenuItemViz(radar_control_id, true);
         alarm_context_mode = false;
+        alarm_bogey_confirmed = false;
+        SaveConfig();
     }
+}
 
-    SaveConfig();
+void br24radar_pi::OnAlarmZoneBogeyConfirm()
+{
+    alarm_bogey_confirmed = true; // This will stop the sound being repeated
+}
+
+void br24radar_pi::OnAlarmZoneBogeyClose()
+{
+    alarm_bogey_confirmed = true; // This will stop the sound being repeated
+    if (m_pAlarmZoneBogey) {
+        m_pAlarmZoneBogey->Hide();
+    }
 }
 
 void br24radar_pi::Select_Alarm_Zones(int zone)
@@ -802,7 +819,6 @@ void br24radar_pi::DoTick(void)
         // Note that the watchdog is continuously reset every time we receive a heading.
         br_bpos_set = false;
         m_hdt_source = 0;
-        PlayAlarmSound(false);
         watchdog = now;
     }
 
@@ -970,7 +986,7 @@ void br24radar_pi::RenderRadarOverlay(wxPoint radar_center, double v_scale_ppm, 
 
     // scaling...
  
-    double radar_pixels_per_meter = 512. / br_range_meters;
+    double radar_pixels_per_meter = 512.0 / br_range_meters;
     double scale_factor =  v_scale_ppm / radar_pixels_per_meter;  // screen pix/radar pix
     scale_factor = scale_factor * settings.range_calibration;
     if (settings.verbose) {
@@ -978,13 +994,15 @@ void br24radar_pi::RenderRadarOverlay(wxPoint radar_center, double v_scale_ppm, 
     }
     glScaled(scale_factor, scale_factor, 1.);
     DrawRadarImage(br_range_meters, radar_center);
-    glPopMatrix();
-    glPopAttrib();
 
     // Alarm Zone image
     if (settings.alarm_zone >0) {
-            RenderAlarmZone(radar_center, v_scale_ppm);
+            RenderAlarmZone(radar_center, v_scale_ppm, vp);
     }
+
+    glPopMatrix();
+    glPopAttrib();
+
 }
 
  /******************************************************************************************************/
@@ -1015,31 +1033,33 @@ void br24radar_pi::RenderRadarStandalone(wxPoint radar_center, double v_scale_pp
         wxLogMessage(msg);
     }
     DrawRadarImage(br_range_meters, radar_center);
-    glPopMatrix();
-    glPopAttrib();
 
     // Alarm Zone image
     if (settings.alarm_zone >0) {
-            RenderAlarmZone(radar_center, v_scale_ppm);
+            RenderAlarmZone(radar_center, v_scale_ppm, vp);
     }
+    glPopMatrix();
+    glPopAttrib();
 }
 
 void br24radar_pi::DrawRadarImage(int max_range, wxPoint radar_center)
 {
+    int bogey_count = 0;
+
     // DRAWING PICTURE
+    GLubyte alpha = 255 * (MAX_OVERLAY_TRANSPARENCY - settings.overlay_transparency) / MAX_OVERLAY_TRANSPARENCY;
+    const double spoke_width = deg2rad(360) / LINES_PER_ROTATION; // How wide is one spoke?
 
-
-    for (int angle = 0 ; angle < LINES_PER_ROTATION ; ++angle) {
+    for (int angle = 0 ; angle < LINES_PER_ROTATION; ++angle) {
 
         if (!m_scan_range[angle][0] && !m_scan_range[angle][1] && !m_scan_range[angle][2]) {
             continue;   // test for entries in each prior scan, if all three empty - stop the process
         }
         for (int radius = 0; radius < 512; ++radius) {
 
-            int red = 0, green = 0, blue = 0, strength = m_scan_buf[angle][radius], alpha;
+            GLubyte red = 0, green = 0, blue = 0, strength = m_scan_buf[angle][radius];
 
             if (strength > 50) { // Only draw when there is color, saves lots of CPU
-                alpha = strength * (MAX_OVERLAY_TRANSPARENCY - settings.overlay_transparency) / MAX_OVERLAY_TRANSPARENCY;
                 switch (settings.display_option) {
                     case 0:
                         red = 255;
@@ -1064,12 +1084,12 @@ void br24radar_pi::DrawRadarImage(int max_range, wxPoint radar_center)
                         break;
                 }
 
-                glColor4ub((GLubyte)red, (GLubyte)green, (GLubyte)blue, (GLubyte)alpha);    // red, blue, green
-                double blob_deg = 2 * 360.0 / LINES_PER_ROTATION;
-                double blob_width = wxMax(1, (blob_deg /360.0) * (radius * 2.0 * PI)); // radar Pixels
+                glColor4ub(red, green, blue, alpha);    // red, blue, green
+                double arc_width = spoke_width;
+                double arc_heigth = 1;
+                double angleRad = angle * spoke_width;
 
-                double angleDeg   = (angle * 360.0) / LINES_PER_ROTATION - (blob_deg/2);
-                draw_blob_gl(angleDeg, radius, blob_width);
+                draw_blob_gl(angleRad, radius, arc_width, arc_heigth);
 
 /**********************************************************************************************************/
 // Alarm Section
@@ -1088,15 +1108,15 @@ void br24radar_pi::DrawRadarImage(int max_range, wxPoint radar_center)
                     }
                     if (angle_deg > AZ_angle_1 && angle_deg < AZ_angle_2) {
                         if (bogey_range > inner_range && bogey_range < outer_range) {
-                            PlayAlarmSound(true);
+                            bogey_count++;
                         }
                     }
-                } else {
-                    PlayAlarmSound(false);
                 }
             }
         }
     }
+
+    HandleBogeyCount(bogey_count);
 }
 
 void br24radar_pi::RenderSpectrum(wxPoint radar_center, double v_scale_ppm, PlugIn_ViewPort *vp)
@@ -1156,46 +1176,55 @@ void br24radar_pi::draw_histogram_column(int x, int y)  // x=0->255 => 0->1020, 
 
 }
 
-void br24radar_pi::draw_blob_gl(double angle, double radius, double blob_width)
+/**
+ * Draw an OpenGL blob at a particular angle in radians, of a particular arc_length, also in radians.
+ *
+ * The minim distance from the center of the plan is radius, and it ends at radius + blob_heigth
+ */
+void br24radar_pi::draw_blob_gl(double angle, double radius, double arc_width, double blob_heigth)
 {
-    double ca = cos(deg2rad(angle));
-    double sa = sin(deg2rad(angle));
+     double ca = cos(angle);
+     double sa = sin(angle);
+     const double blob_start = 0.0;
+     const double blob_end = blob_heigth;
 
-    double xm1 = (radius) * ca;       //    Calculate the blob center x,y
-    double ym1 = (radius) * sa;
+     double xm1 = (radius + blob_start) * ca;
+     double ym1 = (radius + blob_start) * sa;
+     double xm2 = (radius + blob_end) * ca;
+     double ym2 = (radius + blob_end) * sa;
 
-    double xa = xm1 + blob_width; // final coordinates for blob LR corner
-    double ya = ym1 - blob_width;
+     double arc_width_start2 = (radius + blob_start) * arc_width;
+     double arc_width_end2 =   (radius + blob_end) * arc_width;
 
-    double xb = xm1 - blob_width; // final coordinates for blob LL corner
-    double yb = ym1 - blob_width;
+     double xa = xm1 + arc_width_start2 * sa;
+     double ya = ym1 - arc_width_start2 * ca;
 
-    double xc = xm1 - blob_width; // final coordinates for blob UL corner
-    double yc = ym1 + blob_width;
+     double xb = xm2 + arc_width_end2 * sa;
+     double yb = ym2 - arc_width_end2 * ca;
 
-    double xd = xm1 + blob_width; // final coordinates for blob UR corner
-    double yd = ym1 + blob_width;
+     double xc = xm1 - arc_width_start2 * sa;
+     double yc = ym1 + arc_width_start2 * ca;
 
-    glBegin(GL_TRIANGLES);        // draw blob in two triangles
-    glVertex2d(xa, ya);
-    glVertex2d(xb, yb);
-    glVertex2d(xc, yc);
+     double xd = xm2 - arc_width_end2 * sa;
+     double yd = ym2 + arc_width_end2 * ca;
 
-    glVertex2f(xa, ya);
-    glVertex2f(xc, yc);
-    glVertex2f(xd, yd);
-    glEnd();
+     glBegin(GL_TRIANGLES);
+     glVertex2d(xa, ya);
+     glVertex2d(xb, yb);
+     glVertex2d(xc, yc);
+
+     glVertex2d(xb, yb);
+     glVertex2d(xc, yc);
+     glVertex2d(xd, yd);
+     glEnd();
 }
 
 //****************************************************************************
-void br24radar_pi::RenderAlarmZone(wxPoint radar_center, double v_scale_ppm)
+void br24radar_pi::RenderAlarmZone(wxPoint radar_center, double v_scale_ppm, PlugIn_ViewPort *vp)
 {
     glPushAttrib(GL_COLOR_BUFFER_BIT | GL_LINE_BIT | GL_HINT_BIT);      //Save state
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glPushMatrix();
-    glTranslated(radar_center.x, radar_center.y, 0);
-    glRotatef(-90.0, 0, 0, 1);        //correction for base north
 
     ppNM = v_scale_ppm * 1852.0 ;          // screen pixels per naut mile
 
@@ -1222,8 +1251,8 @@ void br24radar_pi::RenderAlarmZone(wxPoint radar_center, double v_scale_ppm)
                 AZ_angle_1 = 0;
                 AZ_angle_2 = 359;
             } else {
-                AZ_angle_1 = Zone1.start_bearing;
-                AZ_angle_2 = Zone1.end_bearing;
+                AZ_angle_1 = Zone2.start_bearing;
+                AZ_angle_2 = Zone2.end_bearing;
             }
 
             int red = 0, green = 0, blue = 200, alpha = 50;
@@ -1231,40 +1260,57 @@ void br24radar_pi::RenderAlarmZone(wxPoint radar_center, double v_scale_ppm)
             DrawFilledArc(AZ_outer_radius, AZ_inner_radius, AZ_angle_1, AZ_angle_2);
     }
 
-    glPopMatrix();
     glPopAttrib();
 }
 
-void br24radar_pi::PlayAlarmSound(bool on_off)
+void br24radar_pi::HandleBogeyCount(int bogey_count)
 {
-    if (!alarm_sound_on && on_off) {
+    bool bogeysFound = bogey_count > settings.alarm_zone_threshold;
+
+    if (bogeysFound
+        && (!m_pAlarmZoneDialog || !m_pAlarmZoneDialog->IsShown()) // Don't raise bogeys as long as control dialog is shown
+        ) {
+        // We have bogeys and there is no objection to showing the dialog
+
         if (!RadarAlarm.IsOk()) {
             RadarAlarm.Create(RadarAlertAudioFile);
         }
+        if (!m_pAlarmZoneBogey) {
+            // If this is the first time we have a bogey create & show the dialog immediately
+            m_pAlarmZoneBogey = new AlarmZoneBogey;
+            m_pAlarmZoneBogey->Create(m_parent_window, this);
+            m_pAlarmZoneBogey->Show();
+        }
 
-#ifndef __WXMSW__
-        if (RadarAlarm.IsOk() && !RadarAlarm.IsPlaying()) {
-            RadarAlarm.Play();
-            wxLogMessage(wxT("Radar Guard Alarm"));
-            alarm_sound_on = true;
+        wxDateTime now = wxDateTime::Now();
+        int delta_t = now.Subtract(alarm_sound_last).GetSeconds().ToLong();
+        const int alarm_interval = 10;
+        if (!alarm_bogey_confirmed && delta_t >= alarm_interval) {
+            // If the last time is 10 seconds ago we ping a sound, unless the user confirmed
+            alarm_sound_last = now;
+
+            if (RadarAlarm.IsOk()) {
+                RadarAlarm.Play();
+            }
+            else {
+                wxBell();
+            }
+            m_pAlarmZoneBogey->Show();
+            delta_t = alarm_interval;
         }
-#else
-        if (RadarAlarm.IsOk() && !alarm_sound_on) {
-            RadarAlarm.Play();
-            wxLogMessage(wxT("Radar Guard Alarm"));
-            alarm_sound_on = true;
-        }
-#endif
+        m_pAlarmZoneBogey->SetBogeyCount(bogey_count, alarm_bogey_confirmed ? -1 : alarm_interval - delta_t);
     }
-
-    if (alarm_sound_on && !on_off) {
+ 
+    if (!bogeysFound) {
         if (RadarAlarm.IsOk()) {
             RadarAlarm.Stop();
         }
-        alarm_sound_on = false;
+        alarm_bogey_confirmed = false; // Reset for next time we see bogeys
+        if (m_pAlarmZoneBogey && m_pAlarmZoneBogey->IsShown()) {
+            m_pAlarmZoneBogey->Hide();
+        }
     }
 }
-//*/
 
 void br24radar_pi::DrawFilledArc(double r1, double r2, double a1, double a2)
 {
@@ -1272,16 +1318,8 @@ void br24radar_pi::DrawFilledArc(double r1, double r2, double a1, double a2)
         a2 += 360.0;
     }
 
-    for( double n = a1; n <= a2; ++n ) {
-        double st = sin(deg2rad(90-n));
-        double ct = cos(deg2rad(90-n));
-        double st2 = sin(deg2rad(90-n-1));
-        double ct2 = cos(deg2rad(90-n-1));
-        glBegin(GL_TRIANGLES);
-        glVertex2f(st*r1, ct*r1);
-        glVertex2f(st2*r1, ct2*r1);
-        glVertex2f(st*r2, ct*r2);
-        glEnd();
+    for (double n = a1; n <= a2; ++n ) {
+        draw_blob_gl(deg2rad(n), r2, deg2rad(0.5), r1 - r2);
     }
 }
 
@@ -1309,6 +1347,7 @@ bool br24radar_pi::LoadConfig(void)
             pConf->Read(wxT("BeamWidth"), &settings.beam_width, 2);
             pConf->Read(wxT("InterferenceRejection"), &settings.rejection, 0);
             pConf->Read(wxT("AlarmZonesActive"), &settings.alarm_zone, 0);
+            pConf->Read(wxT("AlarmZonesThreshold"), &settings.alarm_zone_threshold, 5L);
 
             pConf->Read(wxT("ControlsDialogSizeX"), &m_BR24Controls_dialog_sx, 300L);
             pConf->Read(wxT("ControlsDialogSizeY"), &m_BR24Controls_dialog_sy, 540L);
@@ -1326,6 +1365,7 @@ bool br24radar_pi::LoadConfig(void)
             pConf->Read(wxT("Zone2OutRng"), &Zone2.outer_range, 0);
             pConf->Read(wxT("Zone2InRng"), &Zone2.inner_range, 0);
             pConf->Read(wxT("Zone2ArcCirc"), &Zone2.type, 0);
+
 
             pConf->Read(wxT("RadarAlertAudioFile"), &RadarAlertAudioFile );
             SaveConfig();
@@ -1393,6 +1433,7 @@ bool br24radar_pi::SaveConfig(void)
         pConf->Write(wxT("BeamWidth"),  settings.beam_width);
         pConf->Write(wxT("InterferenceRejection"), settings.rejection);
         pConf->Write(wxT("AlarmZonesActive"), settings.alarm_zone);
+        pConf->Write(wxT("AlarmZonesThreshold"), settings.alarm_zone_threshold);
 
         pConf->Write(wxT("ControlsDialogSizeX"),  m_BR24Controls_dialog_sx);
         pConf->Write(wxT("ControlsDialogSizeY"),  m_BR24Controls_dialog_sy);
