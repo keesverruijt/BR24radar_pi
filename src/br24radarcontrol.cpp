@@ -601,7 +601,7 @@ void BR24ControlsDialog::OnAdvancedButtonClick(wxCommandEvent& event)
 void BR24ControlsDialog::EnterEditMode(RadarControlButton * button)
 {
     fromControl = button;
-    if (!fromBox) {
+    if (fromBox != advancedBox) {
         fromBox = controlBox;
     }
     bValue->SetLabel(button->GetLabel());
