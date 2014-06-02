@@ -63,7 +63,7 @@ enum {                                      // process ID's
     ID_ALARMZONES
 };
 
-wxString GuardZoneNames[3] = { wxT("Off"), wxT("Arc"), wxT("Circle") };
+wxString GuardZoneNames[3] = { _("Off"), _("Arc"), _("Circle") };
 
 bool    outer_set;
 

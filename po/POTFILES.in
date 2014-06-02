@@ -1,3 +1,4 @@
+src/AlarmZoneBogey.cpp
 src/AlarmZoneControls.cpp
 src/br24radar_pi.cpp
 src/br24radar_pi.h

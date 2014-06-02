@@ -7,215 +7,197 @@ msgid ""
 msgstr ""
 "Project-Id-Version: br24radar_pi 3.3.1606\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-04-27 17:40+0200\n"
-"PO-Revision-Date: 2014-04-27 17:41+0100\n"
+"POT-Creation-Date: 2014-06-01 20:57+0200\n"
+"PO-Revision-Date: 2014-06-01 20:45+0100\n"
 "Last-Translator: hakan <momo@stupan.se>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 1.5.7\n"
-
 #
 msgid " Alarm Zone Control"
 msgstr "Alarmzon instälningar"
-
 #
 msgid "&Close"
 msgstr "&Stäng"
-
+#
+msgid "&Confirm"
+msgstr "&Bekräfta"
+#
+msgid ""
+"<<\n"
+"Back"
+msgstr ""
+"<<\n"
+"Tillbaks"
+#
+msgid ""
+"Advanced\n"
+"Controls"
+msgstr ""
+"Avancerade\n"
+"kontroller"
+#
+msgid "Alarm Zone Active"
+msgstr "Aktiv larmzon"
 #
 msgid "Alarm Zones"
 msgstr "Alarmzoner"
-
+#
+#
 #
 msgid "Arc"
 msgstr "Sektor"
-
 #
-msgid "Auto Gain"
-msgstr "Auto förstärkning"
-
-#
-msgid "Automatic"
-msgstr "Automatisk"
-
-#
-msgid "BR24 Radar Control"
-msgstr "BR24 Radar Inställnigar"
-
+msgid "Auto"
+msgstr "Auto"
 #
 msgid "BR24 Target Display Preferences"
 msgstr "BR24 Inställningar Målvisning"
-
+#
+msgid "C&onfirm + Close"
+msgstr "B&ekräfta + Stäng"
 #
 msgid "Calibration"
 msgstr "Kalibrering"
-
+#
+#
 #
 msgid "Circle"
 msgstr "Cirkel"
-
+#
+msgid "Dialog"
+msgstr "Dialog"
 #
 msgid "Display Options"
 msgstr "Skärminställningar"
-
 #
 msgid "End Bearing"
 msgstr "Till bäring"
-
 #
 msgid "GL3+"
 msgstr "GL3+"
-
 #
 msgid "Gain"
 msgstr "Förstärkning"
-
+#
+msgid "Guard Zone"
+msgstr "Larmzon"
+#
+msgid "Guard Zone 1"
+msgstr "Larmzon 1"
+#
+msgid "Guard Zone 2"
+msgstr "Larmzon 2"
+#
+msgid "Guard Zone Styling"
+msgstr "Larmzon - Stil"
 #
 msgid "Heading factor (+ or -, 0 ->180)"
 msgstr "Kurskorrig. (+  -, 0 ->180)"
-
+#
+#
 #
 msgid "High"
 msgstr "Hög"
-
-#
-msgid "Inactive"
-msgstr "Avstängd"
-
 #
 msgid "Inner Range"
 msgstr "Inre gräns"
-
+#
+msgid "Interf. Rej"
+msgstr "Störn.begräns."
 #
 msgid "Kilometers"
 msgstr "Kilometer"
-
+#
+#
 #
 msgid "Low"
 msgstr "Låg"
-
 #
-msgid "Manual"
-msgstr "Manuell"
-
 #
-msgid "Manual Gain"
-msgstr "Man. förstärkning"
-
 #
 msgid "Medium"
 msgstr "Medium"
-
-#
-msgid "Meters"
-msgstr "Meter"
-
 #
 msgid "Monocolor-Red"
 msgstr "Enfärgad-Röd"
-
 #
 msgid "Multi-color"
 msgstr "Flerfärgad"
-
 #
 msgid "Nautical Miles"
 msgstr "Nautisk Mil"
-
 #
 msgid "Navico Broadband BR24/3G/4G Radar PlugIn for OpenCPN\n"
 msgstr "Navico Broadband BR24/3G/4G Radarmodul för OpenCPN\n"
-
 #
 msgid "Navico Radar PlugIn for OpenCPN"
 msgstr "Navico Radarmodul för OpenCPN"
-
+#
+msgid "Next alarm in"
+msgstr "Nästa larm om"
+#
+#
 #
 msgid "Off"
 msgstr "Av"
-
-#
-msgid "Operational Control"
-msgstr "Driftinställningar"
-
 #
 msgid "Outer Range"
 msgstr "Yttre gräns"
-
+#
+msgid "Outline"
+msgstr "Kontur"
 #
 msgid "Overlay Display Options"
 msgstr "Alternativ överlagrad visning"
-
+#
+msgid "Radar"
+msgstr "Radar"
 #
 msgid "Radar Chart Overlay"
 msgstr "Kortöverlagrad radar"
-
 #
 msgid "Radar Control..."
-msgstr "Radar Inställningar..."
-
+msgstr "Radar-Inställningar..."
 #
 msgid "Radar Display"
 msgstr "Radarvisning"
-
 #
 msgid "Radar Standalone"
 msgstr "Självständing radarbild"
-
 #
-msgid "Rain Clutter - Manual"
-msgstr "Regnfilter-Man"
-
+msgid "Rain Clutter"
+msgstr "Regnfilter"
 #
 msgid "Range"
 msgstr "Räckvidd"
-
-#
-msgid "Range Mode"
-msgstr "Räckvidd -Läge"
-
 #
 msgid "Range Units"
 msgstr "Räckvidd -Enhet"
-
 #
-msgid "Range factor"
-msgstr "Räckvidd -Faktor"
-
-#
-msgid "Rejection"
-msgstr "Avstörning"
-
-#
-msgid "Sea Clutter - Auto"
-msgstr "Sjöfilter -Auto"
-
-#
-msgid "Sea Clutter - Manual"
-msgstr "Sjöfilter - Man"
-
+msgid "Sea Clutter"
+msgstr "Sjöfilter"
 #
 msgid "Set Alarm Point"
 msgstr "Ange larm"
-
 #
-msgid "Signal Conditioning"
-msgstr "Signaljustering"
-
+msgid "Shading"
+msgstr "Skuggning"
+#
+msgid "Shading + Outline"
+msgstr "Skuggn + Kontur"
 #
 msgid "Spectrum"
 msgstr "Spektrum"
-
 #
 msgid "Start Bearing"
 msgstr "Från bäring"
-
 #
-msgid "Statute Miles"
-msgstr "Eng. Mil"
-
+msgid "Target Boost"
+msgstr "Målförstärkning"
 #
 msgid ""
 "The Radar Overlay PlugIn requires the Accelerated Graphics (OpenGL) mode to "
@@ -223,43 +205,156 @@ msgid ""
 msgstr ""
 "Överlagring av radarbilden kräver att hårdvarugrafik (OpenGL) är aktiverad. "
 "Se: Inställningar->Visa->Anpassa visning av sjökort"
-
 #
 msgid "The Radar Overlay has lost GPS position and heading data"
 msgstr "Radarfunctione har mist GPS position och kursdata"
-
+#
+msgid "Timeout"
+msgstr "Avbrott"
 #
 msgid "Transparency"
 msgstr "Transparent"
-
 #
-msgid "Tuning"
-msgstr "Inställning"
-
+msgid "Value"
+msgstr "Värde"
 #
 msgid "Zone"
 msgstr "Zon"
-
-#
-msgid "Zone 1"
-msgstr "Zon 1"
-
-#
-msgid "Zone 2"
-msgstr "Zon 2"
-
 #
 msgid "Zone Type:"
 msgstr "Alarmzon:"
-
 #
-msgid "choice"
-msgstr "Val"
-
+msgid "unknown"
+msgstr "okänd"
 #
-msgid "slider"
-msgstr "Reglage"
-
+#
+#
+#
+#
+#
+#~ msgid "Automatic"
+#~ msgstr "Automatisk"
+#
+#
+#
+#
+#
+#
+#~ msgid "BR24 Radar Control"
+#~ msgstr "BR24 Radar Inställnigar"
+#
+#
+#
+#
+#
+#
+#~ msgid "Inactive"
+#~ msgstr "Avstängd"
+#
+#
+#
+#
+#
+#
+#~ msgid "Manual"
+#~ msgstr "Manuell"
+#
+#
+#
+#
+#
+#
+#~ msgid "Manual Gain"
+#~ msgstr "Man. förstärkning"
+#
+#
+#
+#
+#
+#
+#~ msgid "Meters"
+#~ msgstr "Meter"
+#
+#
+#
+#
+#
+#
+#~ msgid "Operational Control"
+#~ msgstr "Driftinställningar"
+#
+#
+#
+#
+#
+#
+#~ msgid "Range Mode"
+#~ msgstr "Räckvidd -Läge"
+#
+#
+#
+#
+#
+#
+#~ msgid "Range factor"
+#~ msgstr "Räckvidd -Faktor"
+#
+#
+#
+#
+#
+#
+#~ msgid "Rejection"
+#~ msgstr "Avstörning"
+#
+#
+#
+#
+#
+#
+#~ msgid "Sea Clutter - Manual"
+#~ msgstr "Sjöfilter - Man"
+#
+#
+#
+#
+#
+#
+#~ msgid "Signal Conditioning"
+#~ msgstr "Signaljustering"
+#
+#
+#
+#
+#
+#
+#~ msgid "Statute Miles"
+#~ msgstr "Eng. Mil"
+#
+#
+#
+#
+#
+#
+#~ msgid "Tuning"
+#~ msgstr "Inställning"
+#
+#
+#
+#
+#~ msgid ""
+#~ "Zone 1: unknown\n"
+#~ "Zone 2: unknown\n"
+#~ "Timeout"
+#~ msgstr ""
+#~ "Zon 1: okänt\n"
+#~ "Zone 2: okänt\n"
+#~ "Tidsavbrott"
+#
+#
+#
+#
+#
 #
 #
 #, fuzzy
