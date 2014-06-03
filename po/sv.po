@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: br24radar_pi 3.3.1606\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-06-01 20:57+0200\n"
-"PO-Revision-Date: 2014-06-01 20:45+0100\n"
+"POT-Creation-Date: 2014-06-03 19:45+0200\n"
+"PO-Revision-Date: 2014-06-03 09:42+0100\n"
 "Last-Translator: hakan <momo@stupan.se>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -17,8 +17,8 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 1.5.7\n"
 #
-msgid " Alarm Zone Control"
-msgstr "Alarmzon instälningar"
+msgid " Guard Zone Control"
+msgstr "Larmzon, instälningar"
 #
 msgid "&Close"
 msgstr "&Stäng"
@@ -39,12 +39,6 @@ msgid ""
 msgstr ""
 "Avancerade\n"
 "kontroller"
-#
-msgid "Alarm Zone Active"
-msgstr "Aktiv larmzon"
-#
-msgid "Alarm Zones"
-msgstr "Alarmzoner"
 #
 #
 #
@@ -92,8 +86,14 @@ msgstr "Larmzon 1"
 msgid "Guard Zone 2"
 msgstr "Larmzon 2"
 #
+msgid "Guard Zone Active"
+msgstr "Larmzon aktiverad"
+#
 msgid "Guard Zone Styling"
 msgstr "Larmzon - Stil"
+#
+msgid "Guard Zones"
+msgstr "Larmzoner"
 #
 msgid "Heading factor (+ or -, 0 ->180)"
 msgstr "Kurskorrig. (+  -, 0 ->180)"
@@ -181,8 +181,8 @@ msgstr "Räckvidd -Enhet"
 msgid "Sea Clutter"
 msgstr "Sjöfilter"
 #
-msgid "Set Alarm Point"
-msgstr "Ange larm"
+msgid "Set Guard Point"
+msgstr "Konfigurera larm"
 #
 msgid "Shading"
 msgstr "Skuggning"
@@ -229,11 +229,20 @@ msgstr "okänd"
 #
 #
 #
+#~ msgid "Alarm Zones"
+#~ msgstr "Alarmzoner"
+#
+#
+#
+#
+#
 #
 #
 #
 #~ msgid "Automatic"
 #~ msgstr "Automatisk"
+#
+#
 #
 #
 #
@@ -248,8 +257,12 @@ msgstr "okänd"
 #
 #
 #
+#
+#
 #~ msgid "Inactive"
 #~ msgstr "Avstängd"
+#
+#
 #
 #
 #
@@ -264,8 +277,12 @@ msgstr "okänd"
 #
 #
 #
+#
+#
 #~ msgid "Manual Gain"
 #~ msgstr "Man. förstärkning"
+#
+#
 #
 #
 #
@@ -280,8 +297,12 @@ msgstr "okänd"
 #
 #
 #
+#
+#
 #~ msgid "Operational Control"
 #~ msgstr "Driftinställningar"
+#
+#
 #
 #
 #
@@ -296,8 +317,12 @@ msgstr "okänd"
 #
 #
 #
+#
+#
 #~ msgid "Range factor"
 #~ msgstr "Räckvidd -Faktor"
+#
+#
 #
 #
 #
@@ -312,8 +337,12 @@ msgstr "okänd"
 #
 #
 #
+#
+#
 #~ msgid "Sea Clutter - Manual"
 #~ msgstr "Sjöfilter - Man"
+#
+#
 #
 #
 #
@@ -328,8 +357,12 @@ msgstr "okänd"
 #
 #
 #
+#
+#
 #~ msgid "Statute Miles"
 #~ msgstr "Eng. Mil"
+#
+#
 #
 #
 #
@@ -342,6 +375,8 @@ msgstr "okänd"
 #
 #
 #
+#
+#
 #~ msgid ""
 #~ "Zone 1: unknown\n"
 #~ "Zone 2: unknown\n"
@@ -350,6 +385,8 @@ msgstr "okänd"
 #~ "Zon 1: okänt\n"
 #~ "Zone 2: okänt\n"
 #~ "Tidsavbrott"
+#
+#
 #
 #
 #

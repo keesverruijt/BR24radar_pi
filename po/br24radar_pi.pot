@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: br24radar_pi 3.3.1715\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-06-01 20:57+0200\n"
+"POT-Creation-Date: 2014-06-03 19:45+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,78 +17,12 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/AlarmZoneBogey.cpp:123 src/AlarmZoneBogey.cpp:142
-#: src/AlarmZoneControls.cpp:228
-msgid "Zone"
-msgstr ""
-
-#: src/AlarmZoneBogey.cpp:123
-msgid "unknown"
-msgstr ""
-
-#: src/AlarmZoneBogey.cpp:123
-msgid "Timeout"
-msgstr ""
-
-#: src/AlarmZoneBogey.cpp:129
-msgid "&Confirm"
-msgstr ""
-
-#: src/AlarmZoneBogey.cpp:132
-msgid "C&onfirm + Close"
-msgstr ""
-
-#: src/AlarmZoneBogey.cpp:142
-msgid "Next alarm in"
-msgstr ""
-
-#: src/AlarmZoneControls.cpp:66 src/br24radarcontrol.cpp:206
-#: src/br24radarcontrol.cpp:207
-msgid "Off"
-msgstr ""
-
-#: src/AlarmZoneControls.cpp:66
-msgid "Arc"
-msgstr ""
-
-#: src/AlarmZoneControls.cpp:66
-msgid "Circle"
-msgstr ""
-
-#: src/AlarmZoneControls.cpp:133
-msgid "Alarm Zones"
-msgstr ""
-
-#: src/AlarmZoneControls.cpp:140
-msgid "Zone Type:"
-msgstr ""
-
-#: src/AlarmZoneControls.cpp:152
-msgid "Inner Range"
-msgstr ""
-
-#: src/AlarmZoneControls.cpp:161
-msgid "Outer Range"
-msgstr ""
-
-#: src/AlarmZoneControls.cpp:171
-msgid "Start Bearing"
-msgstr ""
-
-#: src/AlarmZoneControls.cpp:181
-msgid "End Bearing"
-msgstr ""
-
-#: src/AlarmZoneControls.cpp:192
-msgid "&Close"
-msgstr ""
-
 #: src/br24radar_pi.cpp:454
 msgid "Radar Control..."
 msgstr ""
 
 #: src/br24radar_pi.cpp:458
-msgid "Set Alarm Point"
+msgid "Set Guard Point"
 msgstr ""
 
 #: src/br24radar_pi.cpp:533
@@ -176,7 +110,7 @@ msgid "Heading factor (+ or -, 0 ->180)"
 msgstr ""
 
 #: src/br24radar_pi.cpp:856 src/br24radar_pi.h:631
-msgid " Alarm Zone Control"
+msgid " Guard Zone Control"
 msgstr ""
 
 #: src/br24radar_pi.cpp:947
@@ -194,7 +128,12 @@ msgid "Radar"
 msgstr ""
 
 #: src/br24radar_pi.h:685
-msgid "Alarm Zone Active"
+msgid "Guard Zone Active"
+msgstr ""
+
+#: src/br24radarcontrol.cpp:206 src/br24radarcontrol.cpp:207
+#: src/GuardZoneControls.cpp:66
+msgid "Off"
 msgstr ""
 
 #: src/br24radarcontrol.cpp:206 src/br24radarcontrol.cpp:207
@@ -272,4 +211,65 @@ msgstr ""
 
 #: src/br24radarcontrol.cpp:498
 msgid "Guard Zone"
+msgstr ""
+
+#: src/GuardZoneBogey.cpp:123 src/GuardZoneBogey.cpp:143
+#: src/GuardZoneControls.cpp:227
+msgid "Zone"
+msgstr ""
+
+#: src/GuardZoneBogey.cpp:123
+msgid "unknown"
+msgstr ""
+
+#: src/GuardZoneBogey.cpp:123
+msgid "Timeout"
+msgstr ""
+
+#: src/GuardZoneBogey.cpp:130
+msgid "&Confirm"
+msgstr ""
+
+#: src/GuardZoneBogey.cpp:133
+msgid "C&onfirm + Close"
+msgstr ""
+
+#: src/GuardZoneBogey.cpp:143
+msgid "Next alarm in"
+msgstr ""
+
+#: src/GuardZoneControls.cpp:66
+msgid "Arc"
+msgstr ""
+
+#: src/GuardZoneControls.cpp:66
+msgid "Circle"
+msgstr ""
+
+#: src/GuardZoneControls.cpp:132
+msgid "Guard Zones"
+msgstr ""
+
+#: src/GuardZoneControls.cpp:139
+msgid "Zone Type:"
+msgstr ""
+
+#: src/GuardZoneControls.cpp:151
+msgid "Inner Range"
+msgstr ""
+
+#: src/GuardZoneControls.cpp:160
+msgid "Outer Range"
+msgstr ""
+
+#: src/GuardZoneControls.cpp:170
+msgid "Start Bearing"
+msgstr ""
+
+#: src/GuardZoneControls.cpp:180
+msgid "End Bearing"
+msgstr ""
+
+#: src/GuardZoneControls.cpp:191
+msgid "&Close"
 msgstr ""
