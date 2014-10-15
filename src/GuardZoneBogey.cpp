@@ -120,8 +120,11 @@ void GuardZoneBogey::CreateControls()
 
     wxBoxSizer  *GuardZoneBogeySizer = new wxBoxSizer(wxVERTICAL);
     SetSizer(GuardZoneBogeySizer);
+	wxString Text, z = _("Zone"), un = _("unknown"), tim = _("Timeout"); //_("Zone 1: unknown\nZone 2: unknown\nTimeout")
+    Text.Printf(_T("%s 1: %s\n%s 2: %s\n%s"),z, un, z, un, tim);
 
-    pBogeyCountText = new wxStaticText(this, wxID_ANY, _("Zone 1: unknown\nZone 2: unknown\nTimeout"), wxDefaultPosition, wxDefaultSize, 0);
+    pBogeyCountText = new wxStaticText(this, wxID_ANY, Text, wxDefaultPosition, wxDefaultSize, 0);
+    //pBogeyCountText = new wxStaticText(this, wxID_ANY, _("Zone 1: unknown\nZone 2: unknown\nTimeout"), wxDefaultPosition, wxDefaultSize, 0);
     GuardZoneBogeySizer->Add(pBogeyCountText, 0, wxALIGN_LEFT | wxALL, border);
 
     wxButton    *bConfirm = new wxButton(this, ID_CONFIRM, _("&Confirm"), wxDefaultPosition, wxDefaultSize, 0);
@@ -137,14 +140,15 @@ void GuardZoneBogey::SetBogeyCount(int *bogey_count, int next_alarm)
 {
     wxString text;
     wxString t;
+    wxString Zone = _("Zone"), Nex = _("Next alarm in");
 
     for (int z = 0; z < GUARD_ZONES; z++) {
-        t.Printf(wxT("Zone %d: %d\n"), z + 1, bogey_count[z]);
+        t.Printf(wxT("%s %d: %d\n"), Zone, z + 1, bogey_count[z]);
         text += t;
     }
 
     if (next_alarm >= 0) {
-        t.Printf(wxT("Next alarm in %d s"), next_alarm);
+        t.Printf(wxT("%s %d s"), Nex, next_alarm);
         text += t;
     }
     pBogeyCountText->SetLabel(text);
