@@ -3218,6 +3218,7 @@ fail:
     return INVALID_SOCKET;
 }
 
+
 void *RadarDataReceiveThread::Entry(void)
                                           // this thread will run twice, both for A and B
 {
