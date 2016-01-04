@@ -599,9 +599,7 @@ int br24radar_pi::Init(void)
 
     wxLongLong now = wxGetLocalTimeMillis();
     for (int i = 0; i < LINES_PER_ROTATION; i++) {
-        m_scan_line[0][i].age = now - MAX_AGE * MILLISECONDS_PER_SECOND;
         m_scan_line[0][i].range = 0;
-        m_scan_line[1][i].age = now - MAX_AGE * MILLISECONDS_PER_SECOND;
         m_scan_line[1][i].range = 0;
     }
 
@@ -2147,12 +2145,6 @@ bool br24radar_pi::LoadConfig(void)
         pConf->Read(wxT("Transparency"),  &settings.overlay_transparency, DEFAULT_OVERLAY_TRANSPARENCY);
         pConf->Read(wxT("RangeCalibration"),  &settings.range_calibration, 1.0);
         pConf->Read(wxT("HeadingCorrection"),  &settings.heading_correction, 0);
-        pConf->Read(wxT("ScanMaxAge"), &settings.max_age, 6);   // default 6
-        if (settings.max_age < MIN_AGE) {
-            settings.max_age = MIN_AGE;
-        } else if (settings.max_age > MAX_AGE) {
-            settings.max_age = MAX_AGE;
-        }
         pConf->Read(wxT("RunTimeOnIdle"), &settings.idle_run_time, 2);
 
         pConf->Read(wxT("TimedTrIdleDialogPosX"), &m_TimedTrIdle_dialog_x, 0);
@@ -2241,7 +2233,6 @@ bool br24radar_pi::SaveConfig(void)
         pConf->Write(wxT("HeadingCorrection"),  settings.heading_correction);
         pConf->Write(wxT("GuardZonesThreshold"), settings.guard_zone_threshold);
         pConf->Write(wxT("GuardZonesRenderStyle"), settings.guard_zone_render_style);
-        pConf->Write(wxT("ScanMaxAge"), settings.max_age);
         pConf->Write(wxT("RunTimeOnIdle"), settings.idle_run_time);
         pConf->Write(wxT("DrawAlgorithm"), settings.draw_algorithm);
         pConf->Write(wxT("Refreshrate"), settings.refreshrate);
@@ -2598,7 +2589,7 @@ void radar_control_item::Update(int v)
 void br24radar_pi::SetControlValue(ControlType controlType, int value)
 {                                                   // sends the command to the radar
     wxString msg;
-    if (br_radar_seen || controlType == CT_TRANSPARENCY || controlType == CT_SCAN_AGE || CT_REFRESHRATE) {
+    if (br_radar_seen || controlType == CT_TRANSPARENCY ||  CT_REFRESHRATE) {
         switch (controlType) {
             case CT_GAIN: {
       //          settings.gain = value;
@@ -2748,10 +2739,6 @@ void br24radar_pi::SetControlValue(ControlType controlType, int value)
             }
             case CT_TRANSPARENCY: {
                 settings.overlay_transparency = value;
-                break;
-            }
-            case CT_SCAN_AGE: {
-                settings.max_age = value;
                 break;
             }
             case CT_TIMED_IDLE: {
@@ -3393,7 +3380,6 @@ void RadarDataReceiveThread::process_buffer(radar_frame_pkt * packet, int len)
         }
 
         pPlugIn->m_scan_line[AB][angle_raw].range = range_meters;
-        pPlugIn->m_scan_line[AB][angle_raw].age = nowMillis;
         if (AB == pPlugIn->settings.selectRadarB) {
             pPlugIn->PrepareRadarImage(angle_raw, line->data);   // prepare the vertex array for this line
         }                                            // but only do this for the active radar
@@ -3481,7 +3467,6 @@ void RadarDataReceiveThread::emulate_fake_buffer(void)
         // TODO: create nice actual range circles.
         line.data[RETURNS_PER_LINE - 1] = 0xff;
         pPlugIn->m_scan_line[AB][angle_raw].range = range_meters;
-        pPlugIn->m_scan_line[AB][angle_raw].age = nowMillis;
         pPlugIn->PrepareRadarImage(angle_raw, line.data);
     }
     if (pPlugIn->settings.verbose >= 2) {

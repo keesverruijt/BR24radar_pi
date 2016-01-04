@@ -211,7 +211,6 @@ typedef enum ControlType {
     CT_REFRESHRATE,
     CT_PASSHEADING,
     CT_SCAN_SPEED,
-    CT_SCAN_AGE,
     CT_TIMED_IDLE,
     CT_BEARING_ALIGNMENT,
     CT_SIDE_LOBE_SUPPRESSION,
@@ -248,8 +247,6 @@ static const int RangeUnitsToMeters[2] = {
 #define DEFAULT_OVERLAY_TRANSPARENCY (5)
 #define MIN_OVERLAY_TRANSPARENCY (0)
 #define MAX_OVERLAY_TRANSPARENCY (10)
-#define MIN_AGE (4)
-#define MAX_AGE (12)
 
 struct pi_control_settings {
     int      overlay_transparency;    // now 0-100, no longer a double
@@ -261,14 +258,11 @@ struct pi_control_settings {
     int      guard_zone;            // active zone (0 = none,1,2)
     int      guard_zone_threshold;  // How many blobs must be sent by radar before we fire alarm
     int      guard_zone_render_style;
- //   int      filter_process;
     double   range_calibration;
     double   heading_correction;
     double   skew_factor;
     int      range_units;       // 0 = Nautical miles, 1 = Kilometers
     int      range_unit_meters; // ... 1852 or 1000, depending on range_units
- //   int      beam_width;
-    int      max_age;
     int      timed_idle;
     int      idle_run_time;
     int      draw_algorithm;
@@ -319,7 +313,6 @@ struct guard_zone_settings {
 
 struct scan_line {
     int range;                        // range of this scan line in decimeters
-    wxLongLong age;                   // how old this scan line is. We keep old scans on-screen for a while
     UINT8 history[RETURNS_PER_LINE + 1]; // contains per bit the history of previous scans.
        //Each scan this byte is left shifted one bit. If the strength (=level) of a return is above the threshold
        // a 1 is added in the rightmost position, if below threshold, a 0.
