@@ -1809,6 +1809,14 @@ void br24radar_pi::DrawRadarImage()
 }        // end of DrawRadarImage
 
 
+void br24radar_pi::ClearRadarImage()
+{
+    memset(buffer_index, 0, sizeof(buffer_index));
+    line_index = 0;
+    start_pointer = 0;
+    end_pointer = 0;
+    end_end_pointer = 0;
+}
 
 void br24radar_pi::PrepareRadarImage(int angle, UINT8 * data)   // angle in spokes 0 <= angle < 2048
 {                                                 // prepares one line (spoke) of the image in the vertex buffer
@@ -3350,6 +3358,7 @@ void RadarDataReceiveThread::process_buffer(radar_frame_pkt * packet, int len)
             }
             br_range_meters[AB] = range_meters;
             br_update_range_control[AB] = true;  // signal rendering code to change control value
+            pPlugIn->ClearRadarImage();
         }
 
         hdm_raw = (line->br4g.heading[1] << 8) | line->br4g.heading[0];
