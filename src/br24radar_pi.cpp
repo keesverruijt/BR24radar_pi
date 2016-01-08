@@ -3450,6 +3450,7 @@ void RadarDataReceiveThread::emulate_fake_buffer(void)
     br_radar_type = RT_BR24;
     if (range_meters != br_range_meters[AB]) {
         br_range_meters[AB] = range_meters;
+        pPlugIn->ClearRadarImage();
         // Set the control's value to the real range that we received, not a table idea
         if (pPlugIn->m_pControlDialog) {
             pPlugIn->m_pControlDialog->SetRangeIndex(convertMetersToRadarAllowedValue(&range_meters, pPlugIn->settings.range_units, br_radar_type));
