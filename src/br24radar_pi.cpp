@@ -1594,6 +1594,16 @@ bool br24radar_pi::RenderGLOverlay(wxGLContext *pcontext, PlugIn_ViewPort *vp)
      //   boat_center = center_screen;
     }
 
+    if (settings.emulator_on) {
+        
+        emulate_fake_buffer();
+        if (m_pMessageBox) {
+            wxString ip;
+            ip << _("emulator");
+            m_pMessageBox->SetRadarIPAddress(ip);
+        }
+    }
+
     // set the IP address info in the control box if signalled by the receive thread
 
     if (br_update_error_control) {
@@ -3194,16 +3204,16 @@ void *RadarDataReceiveThread::Entry(void)
     socklen_t        rx_len;
     //    Loop until we quit
     while (!*m_quit) {
-        if (pPlugIn->settings.emulator_on) {
-            socketReady(INVALID_SOCKET, 1000); // sleep for 1s
-            emulate_fake_buffer();
-            if (pPlugIn->m_pMessageBox) {
-                wxString ip;
-                ip << _("emulator");
-                pPlugIn->m_pMessageBox->SetRadarIPAddress(ip);
-            }
-        }
-        else {
+        //if (pPlugIn->settings.emulator_on) {
+        //    socketReady(INVALID_SOCKET, 1000); // sleep for 1s
+        //    emulate_fake_buffer();
+        //    if (pPlugIn->m_pMessageBox) {
+        //        wxString ip;
+        //        ip << _("emulator");
+        //        pPlugIn->m_pMessageBox->SetRadarIPAddress(ip);
+        //    }
+        //}
+         {
             if (rx_socket == INVALID_SOCKET) {
                 if (AB == 1) {
                     rx_socket = startUDPMulticastReceiveSocket(pPlugIn, br_mcast_addr, 6657, "236.6.7.13");
@@ -3226,7 +3236,7 @@ void *RadarDataReceiveThread::Entry(void)
                     radar_frame_pkt packet;
                     rx_len = sizeof(rx_addr);
                     r = recvfrom(rx_socket, (char *) &packet, sizeof(packet), 0, (struct sockaddr *) &rx_addr, &rx_len);
-                    if (r > 0) {
+                    if (r > 0 && !pPlugIn->settings.emulator_on) {
                         process_buffer(&packet, r);
                     }
                     if (r < 0 || !br_mcast_addr || !br_radar_seen) {
@@ -3435,13 +3445,13 @@ void RadarDataReceiveThread::process_buffer(radar_frame_pkt * packet, int len)
  * image.
  */
 
-void RadarDataReceiveThread::emulate_fake_buffer(void)
+void br24radar_pi::emulate_fake_buffer(void)
 {
     radar_line line;
     wxLongLong nowMillis = wxGetLocalTimeMillis();
     time_t now = time(0);
     static int next_scan_number = 0;
-    pPlugIn->m_statistics[AB].packets++;
+    m_statistics[AB].packets++;
     br_radar_seen = true;
     br_radar_watchdog = now;
     int scanlines_in_packet = 2048 * 24 / 60;
@@ -3450,16 +3460,16 @@ void RadarDataReceiveThread::emulate_fake_buffer(void)
     br_radar_type = RT_BR24;
     if (range_meters != br_range_meters[AB]) {
         br_range_meters[AB] = range_meters;
-        pPlugIn->ClearRadarImage();
+        ClearRadarImage();
         // Set the control's value to the real range that we received, not a table idea
-        if (pPlugIn->m_pControlDialog) {
-            pPlugIn->m_pControlDialog->SetRangeIndex(convertMetersToRadarAllowedValue(&range_meters, pPlugIn->settings.range_units, br_radar_type));
+        if (m_pControlDialog) {
+            m_pControlDialog->SetRangeIndex(convertMetersToRadarAllowedValue(&range_meters, settings.range_units, br_radar_type));
         }
     }
     for (int scanline = 0; scanline < scanlines_in_packet; scanline++) {
         int angle_raw = next_scan_number;
         next_scan_number = (next_scan_number + 1) % LINES_PER_ROTATION;
-        pPlugIn->m_statistics[AB].spokes++;
+        m_statistics[AB].spokes++;
 
         // Invent a pattern. Outermost ring, then a square pattern
         for (int range = 0; range < RETURNS_PER_LINE; range++) {
@@ -3476,10 +3486,10 @@ void RadarDataReceiveThread::emulate_fake_buffer(void)
         // returned radar energy at the max range line.
         // TODO: create nice actual range circles.
         line.data[RETURNS_PER_LINE - 1] = 0xff;
-        pPlugIn->m_scan_line[AB][angle_raw].range = range_meters;
-        pPlugIn->PrepareRadarImage(angle_raw, line.data);
+        m_scan_line[AB][angle_raw].range = range_meters;
+        PrepareRadarImage(angle_raw, line.data);
     }
-    if (pPlugIn->settings.verbose >= 2) {
+    if (settings.verbose >= 2) {
         wxLogMessage(wxT("BR24radar_pi: %") wxTPRId64 wxT(" emulating %d spokes at range %d with %d spots"), nowMillis, scanlines_in_packet, range_meters, spots);
     }
 }

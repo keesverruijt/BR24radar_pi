@@ -343,7 +343,7 @@ public:
     br24radar_pi(void *ppimgr);
     void ClearRadarImage();
     void PrepareRadarImage(int angle, UINT8* data);
-    
+    void emulate_fake_buffer(void);
 
     //    The required PlugIn Methods
     int Init(void);
@@ -536,7 +536,7 @@ public:
 
 private:
     void process_buffer(radar_frame_pkt * packet, int len);
-    void emulate_fake_buffer(void);
+    
 
     br24radar_pi      *pPlugIn;
     wxString           m_ip;
