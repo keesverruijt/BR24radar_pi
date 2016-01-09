@@ -115,7 +115,7 @@
 #define displaysetting0_threshold_red (50)
 #define displaysetting1_threshold_blue (50)  // should be < 100
 #define displaysetting2_threshold_blue (20)  // should be < 100
-#define BUFFER_SIZE (2000000)
+#define BUFFER_SIZE (20000000)
 
 static const int VERTEX_PER_TRIANGLE = 3;
 static const int VERTEX_PER_QUAD = 2 * VERTEX_PER_TRIANGLE;

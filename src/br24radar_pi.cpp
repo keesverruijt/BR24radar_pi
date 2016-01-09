@@ -1789,11 +1789,9 @@ void br24radar_pi::DrawRadarImage()
     time_t now = time(0);
 
     int number_of_points;
-    wxLogMessage(wxT("BR24radar_pi: XXX circular buffer"));
     if (end_pointer >= start_pointer) {
         // one block to display
         number_of_points = (end_pointer - start_pointer);
-
         glVertexPointer(2, GL_FLOAT, sizeof(vertex_point), &vertex_buffer[start_pointer].x);
         glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(vertex_point), &vertex_buffer[start_pointer].red);
         glDrawArrays(GL_TRIANGLES, 0, number_of_points);
@@ -1943,6 +1941,7 @@ void br24radar_pi::PrepareRadarImage(int angle, UINT8 * data)   // angle in spok
     line_index++;  // one line added
     if (line_index == LINES_PER_ROTATION) {
         line_index = 0;
+  //      wxLogMessage(wxT("BR24radar_pi: XXX circular buffer size %d"), end_pointer - start_pointer);
     }
 
 }        // end of PrepareRadarImage
