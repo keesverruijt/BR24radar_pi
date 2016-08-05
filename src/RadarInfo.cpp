@@ -215,7 +215,7 @@ RadarInfo::~RadarInfo() {
   m_timer->Stop();
 
   if (m_receive) {
-    m_receive->Delete();
+//    m_receive->Delete();  solution for crashes, not nice but works fine
     delete m_receive;
     m_receive = 0;
   }
