@@ -231,8 +231,6 @@ RadarInfo::~RadarInfo() {
       m_receive->Delete();
       m_receive->Wait();
     }
-    delete m_receive;
-    m_receive = 0;
   }
   DeleteDialogs();
   if (m_draw_panel.draw) {
@@ -323,7 +321,10 @@ void RadarInfo::StartReceive() {
   if (!m_receive) {
     LOG_RECEIVE(wxT("BR24radar_pi: %s starting receive thread"), m_name.c_str());
     m_receive = new br24Receive(m_pi, this);
-    m_receive->Run();
+    if (!m_receive || (m_receive->Run() != wxTHREAD_NO_ERROR)) {
+      LOG_INFO(wxT("BR24radar_pi: %s unable to start receive thread."), m_name.c_str());
+      m_receive = 0;
+    }
   }
 }
 
