@@ -216,17 +216,20 @@ RadarInfo::~RadarInfo() {
 
   if (m_receive) {
     if (m_receive->IsRunning()) {
-      // Delete() will set the status such that TestDestroy() returns true, and then wait for the thread to stop.
-      if (m_receive->Delete() != wxTHREAD_NO_ERROR) {
-        LOG_INFO(wxT("BR24radar_pi: Unable to stop running receive thread"));
-        m_receive = 0;  // don't delete object if we have an error
+      if (m_receive->m_dataSocket != INVALID_SOCKET) {
+        closesocket(m_receive->m_dataSocket);
+        LOG_INFO(wxT("BR24radar_pi: datasocket closed"));
       }
-      // According to the docs, and also the source, the thread is really stopped when we get here.
-    }
-    if (m_receive) {
-      // Since this is a joinable thread we must delete the C++ object ourselves, the thread doesn't do this.
-      delete m_receive;
-      m_receive = 0;
+      if (m_receive->m_commandSocket != INVALID_SOCKET) {
+        closesocket(m_receive->m_commandSocket);
+        LOG_INFO(wxT("BR24radar_pi: commandsocket closed"));
+      }
+      if (m_receive->m_reportSocket != INVALID_SOCKET) {
+        closesocket(m_receive->m_reportSocket);
+        LOG_INFO(wxT("BR24radar_pi: reportsocket closed"));
+      }
+      m_receive->Delete();
+      m_receive->Wait();
     }
   }
   DeleteDialogs();
