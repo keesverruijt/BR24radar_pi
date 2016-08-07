@@ -422,7 +422,6 @@ void *br24Receive::Entry(void) {
       EmulateFakeBuffer();
       continue;
     }
-    if (m_reportSocket == 1 || m_commandSocket == 1 || m_dataSocket == 1) return 0;
     if (m_reportSocket == INVALID_SOCKET) {
       m_reportSocket = PickNextEthernetCard();
       if (m_reportSocket != INVALID_SOCKET) {
@@ -578,7 +577,7 @@ void *br24Receive::Entry(void) {
     freeifaddrs(m_interface_array);
   }
   
-  Sleep(20);
+  Sleep(200);
   m_receiver_stopped = true;
   LOG_VERBOSE(wxT("BR24radar_pi: %s receive thread stopping"), m_ri->m_name.c_str());
   return 0;
