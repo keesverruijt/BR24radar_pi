@@ -213,18 +213,13 @@ void RadarInfo::DeleteDialogs() {
 
 RadarInfo::~RadarInfo() {
   m_timer->Stop();
-  LOG_INFO(wxT("BR24radar_pi: $$$~RadarInfo called"));
   if (m_receive) {
     if (m_receive->IsRunning()) {
-        LOG_INFO(wxT("BR24radar_pi: $$$is running"));
       m_receive->m_stop_receiver = true;
-      LOG_INFO(wxT("BR24radar_pi: $$$is running stop set"));
     }
     while (!m_receive->m_receiver_stopped) {
         Sleep(10);
-        LOG_INFO(wxT("BR24radar_pi: $$$is running sleep"));
     };
-    LOG_INFO(wxT("BR24radar_pi: $$$delete called"));
     m_receive->Delete();
     m_receive->Wait();
   }

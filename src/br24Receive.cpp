@@ -573,11 +573,13 @@ void *br24Receive::Entry(void) {
   if (m_reportSocket != INVALID_SOCKET) {
     closesocket(m_reportSocket);
   }
-  m_receiver_stopped = true;
+ 
   if (m_interface_array) {
     freeifaddrs(m_interface_array);
   }
-
+  
+  Sleep(20);
+  m_receiver_stopped = true;
   LOG_VERBOSE(wxT("BR24radar_pi: %s receive thread stopping"), m_ri->m_name.c_str());
   return 0;
 }
