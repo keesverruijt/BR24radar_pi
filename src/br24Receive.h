@@ -106,10 +106,12 @@ class br24Receive : public wxThread {
   int m_next_rotation;  // slowly rotate emulator
 
   char m_radar_status;
+  SOCKET m_dataSocket = INVALID_SOCKET;
+  SOCKET m_commandSocket = INVALID_SOCKET;
+  SOCKET m_reportSocket = INVALID_SOCKET;
 public:
-    SOCKET m_dataSocket = INVALID_SOCKET;
-    SOCKET m_commandSocket = INVALID_SOCKET;
-    SOCKET m_reportSocket = INVALID_SOCKET;
+    bool m_stop_receiver = false;
+    bool m_receiver_stopped = false;
 };
 
 PLUGIN_END_NAMESPACE

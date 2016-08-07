@@ -213,24 +213,15 @@ void RadarInfo::DeleteDialogs() {
 
 RadarInfo::~RadarInfo() {
   m_timer->Stop();
-
   if (m_receive) {
     if (m_receive->IsRunning()) {
-      if (m_receive->m_dataSocket != INVALID_SOCKET) {
-        closesocket(m_receive->m_dataSocket);
-        LOG_INFO(wxT("BR24radar_pi: datasocket closed"));
-      }
-      if (m_receive->m_commandSocket != INVALID_SOCKET) {
-        closesocket(m_receive->m_commandSocket);
-        LOG_INFO(wxT("BR24radar_pi: commandsocket closed"));
-      }
-      if (m_receive->m_reportSocket != INVALID_SOCKET) {
-        closesocket(m_receive->m_reportSocket);
-        LOG_INFO(wxT("BR24radar_pi: reportsocket closed"));
-      }
-      m_receive->Delete();
-      m_receive->Wait();
+      m_receive->m_stop_receiver = true;
     }
+    while (!m_receive->m_receiver_stopped) {
+        Sleep(10);
+    };
+    m_receive->Delete();
+    m_receive->Wait();
   }
   DeleteDialogs();
   if (m_draw_panel.draw) {
