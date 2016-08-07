@@ -416,7 +416,7 @@ void *br24Receive::Entry(void) {
     m_reportSocket = GetNewReportSocket();
   }
   
-  while (!TestDestroy()) {
+  while (!m_stop_receiver) {
     if (m_pi->m_settings.emulator_on) {
       socketReady(INVALID_SOCKET, 1000);  // sleep for 1s
       EmulateFakeBuffer();
@@ -459,7 +459,7 @@ void *br24Receive::Entry(void) {
 
     r = select(maxFd + 1, &fdin, 0, 0, &tv);
 
-    if (TestDestroy()) {
+    if (m_stop_receiver) {
       break;
     }
 
@@ -573,7 +573,7 @@ void *br24Receive::Entry(void) {
   if (m_reportSocket != INVALID_SOCKET) {
     closesocket(m_reportSocket);
   }
-
+  m_receiver_stopped = true;
   if (m_interface_array) {
     freeifaddrs(m_interface_array);
   }

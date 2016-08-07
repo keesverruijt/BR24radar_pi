@@ -213,27 +213,20 @@ void RadarInfo::DeleteDialogs() {
 
 RadarInfo::~RadarInfo() {
   m_timer->Stop();
-
+  LOG_INFO(wxT("BR24radar_pi: $$$~RadarInfo called"));
   if (m_receive) {
     if (m_receive->IsRunning()) {
-      if (m_receive->m_dataSocket != INVALID_SOCKET) {
-        closesocket(m_receive->m_dataSocket);
-        LOG_INFO(wxT("BR24radar_pi: datasocket closed"));
-        m_receive->m_dataSocket = 1;
-      }
-      if (m_receive->m_commandSocket != INVALID_SOCKET) {
-        closesocket(m_receive->m_commandSocket);
-        LOG_INFO(wxT("BR24radar_pi: commandsocket closed"));
-        m_receive->m_commandSocket = 1;
-      }
-      if (m_receive->m_reportSocket != INVALID_SOCKET) {
-        closesocket(m_receive->m_reportSocket);
-        LOG_INFO(wxT("BR24radar_pi: reportsocket closed"));
-        m_receive->m_reportSocket = 1;
-      }
-      m_receive->Delete();
-      m_receive->Wait();
+        LOG_INFO(wxT("BR24radar_pi: $$$is running"));
+      m_receive->m_stop_receiver = true;
+      LOG_INFO(wxT("BR24radar_pi: $$$is running stop set"));
     }
+    while (!m_receive->m_receiver_stopped) {
+        Sleep(10);
+        LOG_INFO(wxT("BR24radar_pi: $$$is running sleep"));
+    };
+    LOG_INFO(wxT("BR24radar_pi: $$$delete called"));
+    m_receive->Delete();
+    m_receive->Wait();
   }
   DeleteDialogs();
   if (m_draw_panel.draw) {
