@@ -577,9 +577,13 @@ void *br24Receive::Entry(void) {
     freeifaddrs(m_interface_array);
   }
   
-  Sleep(200);
+  Sleep(20); // wait for threads to close
   m_receiver_stopped = true;
   LOG_VERBOSE(wxT("BR24radar_pi: %s receive thread stopping"), m_ri->m_name.c_str());
+  // don't quit yet, otherwise delete will fail
+  while (!TestDestroy()) {
+      Sleep(1);
+  }
   return 0;
 }
 

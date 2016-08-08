@@ -299,7 +299,6 @@ bool br24radar_pi::DeInit(void) {
     delete m_bogey_dialog;
     m_bogey_dialog = 0;
   }
-
   // Delete all dialogs
   for (int r = 0; r < RADARS; r++) {
     m_radar[r]->DeleteDialogs();

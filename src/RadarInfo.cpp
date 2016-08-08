@@ -218,7 +218,7 @@ RadarInfo::~RadarInfo() {
       m_receive->m_stop_receiver = true;
     }
     while (!m_receive->m_receiver_stopped) {
-        Sleep(10);
+      Sleep(10);
     };
     m_receive->Delete();
     m_receive->Wait();
