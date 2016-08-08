@@ -220,8 +220,10 @@ RadarInfo::~RadarInfo() {
     while (!m_receive->m_receiver_stopped) {
       Sleep(10);
     };
-    m_receive->Delete();
+ //   m_receive->Delete();
     m_receive->Wait();
+    delete m_receive;
+    m_receive = 0;
   }
   DeleteDialogs();
   if (m_draw_panel.draw) {
