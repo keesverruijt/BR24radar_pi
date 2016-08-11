@@ -66,39 +66,41 @@ static UINT8 BR24MARK[] = {0x00, 0x44, 0x0d, 0x0e};
 #pragma pack(push, 1)
 
 struct common_header {
-  UINT8 headerLen;       // 1 bytes
-  UINT8 status;          // 1 bytes
-  UINT8 scan_number[2];  // 2 bytes, 0-4095
-  UINT8 u00[4];          // 4 bytes
-  UINT8 angle[2];        // 2 bytes
-  UINT8 heading[2];      // 2 bytes heading with RI-10/11
+  UINT8 headerLen;       // 0 1 bytes
+  UINT8 status;          // 1 1 bytes
+  UINT8 scan_number[2];  // 2 2 bytes, 0-4095
+  UINT8 u00[4];          // 4 4 bytes
+  UINT8 angle[2];        // 8 2 bytes
+  UINT8 heading[2];      // 10 2 bytes heading with RI-10/11
 };
 
 struct br24_header {
-  UINT8 headerLen;       // 1 bytes
-  UINT8 status;          // 1 bytes
-  UINT8 scan_number[2];  // 2 bytes, 0-4095
-  UINT8 mark[4];         // 4 bytes 0x00, 0x44, 0x0d, 0x0e
-  UINT8 angle[2];        // 2 bytes
-  UINT8 heading[2];      // 2 bytes heading with RI-10/11
-  UINT8 range[4];        // 4 bytes
-  UINT8 u01[2];          // 2 bytes blank
-  UINT8 u02[2];          // 2 bytes
-  UINT8 u03[4];          // 4 bytes blank
+  UINT8 headerLen;       // 0 1 bytes
+  UINT8 status;          // 1 1 bytes
+  UINT8 scan_number[2];  // 2 2 bytes, 0-4095
+  UINT8 mark[4];         // 4 4 bytes 0x00, 0x44, 0x0d, 0x0e
+  UINT8 angle[2];        // 8 2 bytes
+  UINT8 heading[2];      // 10 2 bytes heading with RI-10/11
+  UINT8 range[4];        // 12 4 bytes
+  UINT8 u01[2];          // 16 2 bytes blank
+  UINT8 u02[2];          // 18 2 bytes
+  UINT8 u03;             // 20 1 bytes blank
+  UINT8 heading_true;    // 21 1 if 0 magnetic heading on radar (if heading on radar)
+  UINT8 u05[2];          // 22 2 bytes blank
 };                       /* total size = 24 */
 
 struct br4g_header {
-  UINT8 headerLen;       // 1 bytes
-  UINT8 status;          // 1 bytes
-  UINT8 scan_number[2];  // 2 bytes, 0-4095
-  UINT8 u00[2];          // Always 0x4400 (integer)
-  UINT8 largerange[2];   // 2 bytes or -1
-  UINT8 angle[2];        // 2 bytes
-  UINT8 heading[2];      // 2 bytes heading with RI-10/11 or -1
-  UINT8 smallrange[2];   // 2 bytes or -1
-  UINT8 rotation[2];     // 2 bytes, rotation/angle
-  UINT8 u02[4];          // 4 bytes signed integer, always -1
-  UINT8 u03[4];          // 4 bytes signed integer, mostly -1 (0x80 in last byte) or 0xa0 in last byte
+  UINT8 headerLen;       // 0 1 bytes
+  UINT8 status;          // 1 1 bytes
+  UINT8 scan_number[2];  // 2 2 bytes, 0-4095
+  UINT8 u00[2];          // 4 Always 0x4400 (integer)
+  UINT8 largerange[2];   // 6 2 bytes or -1
+  UINT8 angle[2];        // 8 2 bytes
+  UINT8 heading[2];      // 10 2 bytes heading with RI-10/11 or -1
+  UINT8 smallrange[2];   // 12 2 bytes or -1
+  UINT8 rotation[2];     // 14 2 bytes, rotation/angle
+  UINT8 u02[4];          // 16 4 bytes signed integer, always -1
+  UINT8 u03[4];          // 20 4 bytes signed integer, mostly -1 (0x80 in last byte) or 0xa0 in last byte
 };                       /* total size = 24 */
 
 struct radar_line {
@@ -663,7 +665,7 @@ struct radar_state04_66 {    // 04 C4 with length 66
   UINT16 antenna_height;     // 10-11
 };
 
-struct radar_state01_18 {  // 04 C4 with length 66
+struct radar_state01_18 {  // 01 C4 with length 18
   UINT8 what;              // 0   0x01
   UINT8 command;           // 1   0xC4
   UINT8 radar_status;      // 2
@@ -703,7 +705,6 @@ bool br24Receive::ProcessReport(const UINT8 *report, int len) {
         // Radar status in byte 2
         if (s->radar_status != m_radar_status) {
           m_radar_status = report[2];
-          m_ri->m_radar_type = RT_4G;  // only 4G Tx on channel B
         }
         break;
       }
