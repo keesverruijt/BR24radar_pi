@@ -159,7 +159,7 @@ class RadarInfo : public wxEvtHandler {
 #define STAYALIVE_TIMEOUT (5)  // Send data every 5 seconds to ping radar
 #define DATA_TIMEOUT (5)
 
-  RadarType m_radar_type;
+  RadarType m_radar_type = RT_4G; // default
   bool m_auto_range_mode;
   int m_overlay_refreshes_queued;
   int m_refreshes_queued;
